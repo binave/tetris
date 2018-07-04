@@ -144,7 +144,7 @@ public class TetrisClassic extends JPanel {
             }
 
             public void keyReleased(KeyEvent e) {
-                switch (e.getKeyCode()) {
+                switch (e.getKeyCode() + (e.getKeyLocation() - 1) * 1000) {
                     case KeyEvent.VK_LEFT:
                         turnLeft = false;       // 左键允许左移
                         break;
@@ -173,6 +173,7 @@ public class TetrisClassic extends JPanel {
                     case KeyEvent.VK_SHIFT + 1000:// 左 SHIFT 键按下，消耗SP使用下一个方块
                         exTet();
                         break;
+                    case KeyEvent.VK_Q:         // Q 键弹起退出游戏
                     case KeyEvent.VK_ESCAPE:    // Esc 键弹起退出游戏
                         System.exit(0);
                         break;
@@ -286,7 +287,7 @@ public class TetrisClassic extends JPanel {
                 if (++line % 30 == 0)
                     // 每消除 30 行提升一级难度，会影响触发定时下落的频率
                     level++;
-                sP += 1 + subLine++; // 奖励SP点，可以用于更换方块。
+                subLine++; // 奖励SP点，可以用于更换方块。
             }
             if (row == 0) {     // 如果有格子的行数已经达到顶层
                 state = ImageLoader.game_over;      // 更换游戏结束的背景
@@ -296,6 +297,20 @@ public class TetrisClassic extends JPanel {
             if (inCell == 0)
                 break;      // 当遍历到空行则不再进行背景的扫描
         }
+
+        switch (subLine) {// 根据消除行数选择奖励
+            case 2:
+                sP += 1;
+                break;
+            case 3:
+                sP += 3;
+                break;
+            case 4:
+                sP += 6;
+                break;
+        }
+        sP = sP > 30 ? 30 : sP;        // 限制 SP 个数为三十
+
     }
 
     /**
