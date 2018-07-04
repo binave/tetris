@@ -16,6 +16,7 @@
 
 package org.binave.game.tetris.play;
 
+import org.binave.game.tetris.Start;
 import org.binave.game.tetris.common.ImageLoader;
 import org.binave.game.tetris.common.UDPArrayAlter;
 import org.binave.game.tetris.entity.Cell;
@@ -31,9 +32,9 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.*;
+import java.util.Timer;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 /**
  * @version 1.02
@@ -111,7 +112,7 @@ public class TetrisOnlineServer extends JPanel {
      */
     private int rotate;
 
-    private TetrisOnlineServer(int row, int col) {
+    private TetrisOnlineServer(int port, int row, int col) {
         int p = 2;      // 对战人数
         ClientPort = -1;        // 端口初始值
         height = row;
@@ -149,7 +150,7 @@ public class TetrisOnlineServer extends JPanel {
         hard = new int[p];
         sua = new UDPArrayAlter();
         try {
-            ds = new DatagramSocket(8088);
+            ds = new DatagramSocket(port);
             sdp = new DatagramPacket(udpCell, udpCell.length);
         } catch (SocketException ignored) {
         }
@@ -161,13 +162,18 @@ public class TetrisOnlineServer extends JPanel {
      * 局域网俄罗斯方块【服务端入口】
      */
     public static void main(String[] args) {
+
+        int port = Start.getPort(args[0]);
+
+        System.out.println("监听 " + port + " 端口");
+
         JFrame frame = new JFrame("Tetris");        // 建立画面
-        final TetrisOnlineServer bg = new TetrisOnlineServer(20, 10);   // 设置背景宽高
+        final TetrisOnlineServer bg = new TetrisOnlineServer(port, 20, 10);   // 设置背景宽高
         frame.add(bg);
         frame.setSize(ImageLoader.backgroundDual.getWidth(), ImageLoader.backgroundDual.getHeight());       // 布画大小
 //         frame.setAlwaysOnTop(true);        // 总在最上面
         frame.setUndecorated(true);         // 去掉边框
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);       // 关闭画面时停止程序
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);       // 关闭画面时停止程序
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);     // 显示画面
         bg.action();                // 调用定时触发和键盘监听

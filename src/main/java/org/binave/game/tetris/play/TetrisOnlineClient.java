@@ -16,6 +16,7 @@
 
 package org.binave.game.tetris.play;
 
+import org.binave.game.tetris.Start;
 import org.binave.game.tetris.common.ImageLoader;
 import org.binave.game.tetris.common.UDPArrayAlter;
 
@@ -31,8 +32,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.Arrays;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 /**
  *
@@ -95,10 +95,10 @@ public class TetrisOnlineClient extends JPanel {
     private boolean changeTetromino;        // 发动技能
     private boolean gamePause;      // 是否开启暂停画面
 
-    private TetrisOnlineClient(int row, int col) {
+    private TetrisOnlineClient(int port, int row, int col) {
         height = row;
         width = col;
-        ServerPort = 8088;
+        ServerPort = port;
         gamePause = true;
         int p = 2;      // 玩家个数
         uaa = new UDPArrayAlter();
@@ -131,12 +131,16 @@ public class TetrisOnlineClient extends JPanel {
         }
 
         JFrame frame = new JFrame("Tetris");        // 建立画面
-        final TetrisOnlineClient bg = new TetrisOnlineClient(20, 10);       // 设置背景宽高
+        final TetrisOnlineClient bg = new TetrisOnlineClient(
+                Start.getPort(args.length > 1 ? args[1] : null),
+                20,
+                10
+        );       // 设置背景宽高
         frame.add(bg);
         frame.setSize(ImageLoader.backgroundDual.getWidth(), ImageLoader.backgroundDual.getHeight());       // 布画大小
         // frame.setAlwaysOnTop(true);      // 总在最上面
         frame.setUndecorated(true); // 去掉边框
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);       // 关闭画面时停止程序
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);       // 关闭画面时停止程序
         frame.setLocationRelativeTo(null);
         bg.start(frame, args[0]);   // 进行动作判定，画面控制
     }
@@ -148,16 +152,16 @@ public class TetrisOnlineClient extends JPanel {
         this.addKeyListener(new KeyAdapter() { // 键盘监听匿名内部类
             public void keyPressed(KeyEvent e) {// 接收按键按下事件
                 switch (e.getKeyCode() + (e.getKeyLocation() - 1) * 1000) {
-                    case KeyEvent.VK_UP:// 上键按下
+                    case KeyEvent.VK_UP:   // 上键按下
                         turnRotate = true;      // 允许顺时针九十度旋转
                         break;
                     case KeyEvent.VK_RIGHT:// 右键按下
                         turnRight = true;       // 允许右移
                         break;
-                    case KeyEvent.VK_DOWN:// 下键按下
+                    case KeyEvent.VK_DOWN: // 下键按下
                         turnDrop = true;        // 允许加速下落
                         break;
-                    case KeyEvent.VK_LEFT:// 左键按下
+                    case KeyEvent.VK_LEFT: // 左键按下
                         turnLeft = true;        // 允许左移
                         break;
                     case KeyEvent.VK_SPACE:// 空格键按下
@@ -175,13 +179,13 @@ public class TetrisOnlineClient extends JPanel {
              */
             public void keyReleased(KeyEvent e) {
                 switch (e.getKeyCode() + (e.getKeyLocation() - 1) * 1000) {
-                    case KeyEvent.VK_RIGHT:// 右键弹起
+                    case KeyEvent.VK_RIGHT: // 右键弹起
                         turnRight = false;      // 禁止右移
                         break;
-                    case KeyEvent.VK_DOWN:// 下键弹起
+                    case KeyEvent.VK_DOWN:  // 下键弹起
                         turnDrop = false;       // 禁止加速下落
                         break;
-                    case KeyEvent.VK_LEFT:// 左键弹起
+                    case KeyEvent.VK_LEFT:  // 左键弹起
                         turnLeft = false;       // 禁止左移
                         break;
                     case KeyEvent.VK_ESCAPE:// Esc 键弹起

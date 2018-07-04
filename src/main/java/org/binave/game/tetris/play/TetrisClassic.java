@@ -29,8 +29,7 @@ import java.awt.image.BufferedImage;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 /**
  * @version 1.02
@@ -116,7 +115,7 @@ public class TetrisClassic extends JPanel {
         frame.setSize(ImageLoader.background.getWidth(), ImageLoader.background.getHeight());       // 布画大小
         frame.setAlwaysOnTop(true);     // 总在最上面
         frame.setUndecorated(true);     // 去掉边框
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);       // 关闭画面时停止程序
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);       // 关闭画面时停止程序
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);     // 显示画面
         bg.action();        // 调用定时触发和键盘监听
@@ -162,29 +161,20 @@ public class TetrisClassic extends JPanel {
                         hardDrop = true;        // 空格键允许循环加速下落
                         break;
                     case KeyEvent.VK_P:
-                        state = ImageLoader.pause;      // 设置背景图片为暂停
-                        gameStart = false;      // 禁止游戏运行
+                        gameStart = !gameStart;      // 暂停或继续游戏运行
+                        if (gameStart) {
+                            if (state == ImageLoader.game_over) {// 重新开始游戏
+                                initialise();       // 初始化静态方块，sP、消除行数
+                            }
+                            state = ImageLoader.background;
+                            gameState = true;
+                        } else state = ImageLoader.pause;
                         break;
-                    case KeyEvent.VK_Z:         // 消耗SP使用下一个方块
+                    case KeyEvent.VK_SHIFT + 1000:// 左 SHIFT 键按下，消耗SP使用下一个方块
                         exTet();
                         break;
-                    case KeyEvent.VK_Q:
-                        System.exit(0);     // Q键强制退出该进程
-                        break;
-                    case KeyEvent.VK_C:
-                        if (state == ImageLoader.pause) {
-                            state = ImageLoader.background;
-                            gameStart = true;       // 从暂停状态变为游戏进行状态
-                            gameState = true;       // 允许屏幕刷新
-                        }
-                        break;
-                    case KeyEvent.VK_S:
-                        if (state == ImageLoader.game_over) {
-                            state = ImageLoader.background;
-                            gameStart = true;       // 从暂停状态变为游戏进行状态
-                            gameState = true;       // 允许屏幕刷新
-                            initialise();       // 初始化静态方块背景，游戏得分、难度等级、消除行数
-                        }
+                    case KeyEvent.VK_ESCAPE:    // Esc 键弹起退出游戏
+                        System.exit(0);
                         break;
                 }
             }
@@ -317,12 +307,10 @@ public class TetrisClassic extends JPanel {
                 allowLeft = allowRight = turnDrop = hardDrop = false;
                 break;
             }
-            if (turnLeft
-                    && (t.row < 0 || t.col == 0 || backGround[t.row][t.col - 1] != 0))  // 同上，左面
+            if (turnLeft && (t.col == 0 || backGround[t.row][t.col - 1] != 0))  // 同上，左面
                 // 如果方块左方是边界或方块，则关闭左移开关
                 allowLeft = false;
-            if (turnRight
-                    && (t.row < 0 || t.col == backGround[0].length - 1 || backGround[t.row][t.col + 1] != 0))   // 同上，右面
+            if (turnRight && (t.col == backGround[0].length - 1 || backGround[t.row][t.col + 1] != 0))   // 同上，右面
                 // 如果方块右方是边界或方块，则关闭右移开关
                 allowRight = false;
             if (t.row == height - 1 || backGround[t.row + 1][t.col] != 0)

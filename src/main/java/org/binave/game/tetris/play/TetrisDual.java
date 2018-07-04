@@ -29,8 +29,7 @@ import java.awt.image.BufferedImage;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 /**
  * @version 1.02
@@ -143,7 +142,7 @@ public class TetrisDual extends JPanel {
         frame.setSize(ImageLoader.backgroundDual.getWidth(), ImageLoader.backgroundDual.getHeight());       // 布画大小
         frame.setAlwaysOnTop(true);     // 总在最上面
         frame.setUndecorated(true);     // 去掉边框
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);       // 关闭画面时停止程序
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);       // 关闭画面时停止程序
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);     // 显示画面
         bg.action();        // 调用定时触发和键盘监听
@@ -156,73 +155,71 @@ public class TetrisDual extends JPanel {
         this.addKeyListener(new KeyAdapter() { // 键盘监听匿名内部类
             public void keyPressed(KeyEvent e) {// 接收按键按下事件
                 switch (e.getKeyCode()) {
-                    case KeyEvent.VK_A:// A键按下
+                    case KeyEvent.VK_A:     // A键按下
                         turnLeft[0] = true;     // 允许左移
                         break;
-                    case KeyEvent.VK_W:// W键按下
+                    case KeyEvent.VK_W:     // W键按下
                         turnRotate[0] = true;       // 允许顺时针九十度旋转
                         break;
-                    case KeyEvent.VK_D:// D键按下
+                    case KeyEvent.VK_D:     // D键按下
                         turnRight[0] = true;        // 允许右移
                         break;
-                    case KeyEvent.VK_S:// S键按下
+                    case KeyEvent.VK_S:     // S键按下
                         turnDrop[0] = true;     // 允许加速下落
                         break;
-                    case KeyEvent.VK_LEFT:// 左键按下
+                    case KeyEvent.VK_LEFT:  // 左键按下
                         turnLeft[1] = true;     // 允许左移
                         break;
-                    case KeyEvent.VK_UP:// 上键按下
+                    case KeyEvent.VK_UP:    // 上键按下
                         turnRotate[1] = true;       // 允许顺时针九十度旋转
                         break;
-                    case KeyEvent.VK_RIGHT:// 右键按下
+                    case KeyEvent.VK_RIGHT: // 右键按下
                         turnRight[1] = true;        // 允许右移
                         break;
-                    case KeyEvent.VK_DOWN:// 下键按下
+                    case KeyEvent.VK_DOWN:  // 下键按下
                         turnDrop[1] = true;     // 允许加速下落
                         break;
                 }
             }
 
-            /*
-             * 接收按键弹起事件 左右 Ctrl Shift Alt 的 KeyCode 值相同 ，但 KeyLocation 值不同， 左边均为
-             * 2，右边均为 3 数字键均为 4，其他为 1。
+            /**
+             * 接收按键弹起事件 左右 Ctrl Shift Alt 的 KeyCode 值相同，
+             * 但 KeyLocation 值不同，
+             * 左边均为 2，右边均为 3 数字键均为 4，其他为 1。
              */
             public void keyReleased(KeyEvent e) {
                 switch ((e.getKeyLocation() - 1) * 1000 + e.getKeyCode()) {
-                    case KeyEvent.VK_ESCAPE:// Esc 键弹起
-                        System.exit(0);     // 强制退出该进程
-                        break;
-                    case KeyEvent.VK_A:// A键弹起
+                    case KeyEvent.VK_A:     // A键弹起
                         turnLeft[0] = false;        // 禁止左移
                         break;
-                    case KeyEvent.VK_D:// D键弹起
+                    case KeyEvent.VK_D:     // D键弹起
                         turnRight[0] = false;       // 禁止右移
                         break;
-                    case KeyEvent.VK_S:// S键弹起
+                    case KeyEvent.VK_S:     // S键弹起
                         turnDrop[0] = false;        // 禁止加速左下落
                         break;
-                    case KeyEvent.VK_LEFT:// 左键弹起
+                    case KeyEvent.VK_LEFT:  // 左键弹起
                         turnLeft[1] = false;        // 禁止左移
                         break;
-                    case KeyEvent.VK_RIGHT:// 右键弹起
+                    case KeyEvent.VK_RIGHT: // 右键弹起
                         turnRight[1] = false;       // 禁止右移
                         break;
-                    case KeyEvent.VK_DOWN:// 下键弹起
+                    case KeyEvent.VK_DOWN:  // 下键弹起
                         turnDrop[1] = false;        // 禁止加速左下落
                         break;
-                    case KeyEvent.VK_Z:// Z 键弹起
-                        HardDrop[0] = true;     // 允许循环加速下落
+                    case KeyEvent.VK_Z:      // Z 键弹起
+                        HardDrop[0] = true;         // 允许循环加速下落
                         break;
-                    case KeyEvent.VK_PAGE_DOWN:// PageDown 弹起
-                        HardDrop[1] = true;     // 允许循环加速下落
+                    case KeyEvent.VK_SLASH:  // '/' 键弹起
+                        HardDrop[1] = true;         // 允许循环加速下落
                         break;
-                    case KeyEvent.VK_Q:// Q 键弹起
-                        exTet(0);       // 使用下一个方块
+                    case KeyEvent.VK_Q:      // Q 键弹起
+                        exTet(0);                 // 使用下一个方块
                         break;
-                    case KeyEvent.VK_SLASH:// '/' 键弹起
-                        exTet(1);       // 使用下一个方块
+                    case KeyEvent.VK_PERIOD: // '.' 句号弹起
+                        exTet(1);                 // 使用下一个方块
                         break;
-                    case KeyEvent.VK_SPACE:// 空格键弹起
+                    case KeyEvent.VK_SPACE:  // 空格键弹起
                         if (state != ImageLoader.backgroundDual) {
                             if (state == ImageLoader.game_over) {// 重新开始游戏
                                 initialise();       // 初始化静态方块，sP、消除行数
@@ -234,6 +231,9 @@ public class TetrisDual extends JPanel {
                             state = ImageLoader.pause;      // 设置背4景图片为暂停
                             gameStart = false;      // 禁止游戏运行
                         }
+                        break;
+                    case KeyEvent.VK_ESCAPE:// Esc 键弹起
+                        System.exit(0);     // 强制退出该进程
                         break;
                 }
             }
@@ -293,7 +293,7 @@ public class TetrisDual extends JPanel {
      * @param i
      */
     private void exTet(int i) {
-        if (sP[i] > 0) {// 如果没有 SP 将无法使用变更方块技能
+        if (sP[i] > 0) {    // 如果没有 SP 将无法使用变更方块技能
             sP[i]--;
             exchangeTetromino(i);
         }
@@ -302,7 +302,6 @@ public class TetrisDual extends JPanel {
     /**
      * 处理背景，奖励
      *
-     * @param i
      */
     private void start(int i) {
         if (!autoDrop[i] && !turnDrop[i] && !turnLeft[i] && !turnRight[i]
@@ -318,7 +317,6 @@ public class TetrisDual extends JPanel {
     /**
      * 接收动作指令并执行合理的指令
      *
-     * @param i
      */
     private void move(int i) {
         allowLeft[i] = allowRight[i] = allowDrop[i] = true;     // 初始化下降触碰开关
