@@ -1,9 +1,8 @@
 package org.binave.game.tetris;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 
 import org.binave.game.tetris.play.TetrisClassic;
 import org.binave.game.tetris.play.TetrisDual;
@@ -182,13 +181,56 @@ public class Start {
             return; // 已存在，无需重复生成
         }
 
-        try (InputStream is = Start.class.getResourceAsStream("/fontconfig.properties")) {
-            if (is == null) {
-                System.err.printf("[Native Image] Warning: fontconfig.properties resource not found%n");
-                return;
-            }
+        // Windows 字体配置（硬编码）
+        String fontConfigContent = """
+            # Font configuration for GraalVM Native Image on Windows
+            version=1
+            sequence.allfonts=default
+            sequence.serif=default
+            sequence.sansserif=default
+            sequence.monospaced=default
+            serif.plain.latin-1=Times New Roman
+            serif.bold.latin-1=Times New Roman Bold
+            serif.italic.latin-1=Times New Roman Italic
+            serif.bolditalic.latin-1=Times New Roman Bold Italic
+            sansserif.plain.latin-1=Arial
+            sansserif.bold.latin-1=Arial Bold
+            sansserif.italic.latin-1=Arial Italic
+            sansserif.bolditalic.latin-1=Arial Bold Italic
+            monospaced.plain.latin-1=Consolas
+            monospaced.bold.latin-1=Consolas Bold
+            monospaced.italic.latin-1=Consolas Italic
+            monospaced.bolditalic.latin-1=Consolas Bold Italic
+            dialog.plain.latin-1=Arial
+            dialog.bold.latin-1=Arial Bold
+            dialog.italic.latin-1=Arial Italic
+            dialog.bolditalic.latin-1=Arial Bold Italic
+            dialoginput.plain.latin-1=Consolas
+            dialoginput.bold.latin-1=Consolas Bold
+            dialoginput.italic.latin-1=Consolas Italic
+            dialoginput.bolditalic.latin-1=Consolas Bold Italic
+            exclusion.serif.0=-none-
+            exclusion.sansserif.0=-none-
+            exclusion.monospaced.0=-none-
+            filename.Times_New_Roman=TIMES.TTF
+            filename.Times_New_Roman_Bold=TIMESBD.TTF
+            filename.Times_New_Roman_Italic=TIMESI.TTF
+            filename.Times_New_Roman_Bold_Italic=TIMESBI.TTF
+            filename.Arial=ARIAL.TTF
+            filename.Arial_Bold=ARIALBD.TTF
+            filename.Arial_Italic=ARIALI.TTF
+            filename.Arial_Bold_Italic=ARIALBI.TTF
+            filename.Consolas=CONSOLA.TTF
+            filename.Consolas_Bold=CONSOLAB.TTF
+            filename.Consolas_Italic=CONSOLAI.TTF
+            filename.Consolas_Bold_Italic=CONSOLAZ.TTF
+            """;
+
+        try {
             libDir.mkdirs();
-            Files.copy(is, fontConfig.toPath());
+            try (FileWriter writer = new FileWriter(fontConfig)) {
+                writer.write(fontConfigContent);
+            }
             System.out.printf("[Native Image] Font config generated: %s%n", fontConfig.getAbsolutePath());
         } catch (IOException e) {
             System.err.printf("[Native Image] Failed to create font config: %s%n", e.getMessage());

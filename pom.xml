@@ -82,7 +82,6 @@
                     <imageName>${project.artifactId}</imageName>
                     <buildArgs>
                         <buildArg>--no-fallback</buildArg>
-                        <buildArg>--no-server</buildArg>
                         <buildArg>-H:+UnlockExperimentalVMOptions</buildArg>
                         <buildArg>-H:-CheckToolchain</buildArg>
                         <buildArg>-H:+ReportExceptionStackTraces</buildArg>
