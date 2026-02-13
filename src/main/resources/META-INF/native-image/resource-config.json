@@ -1,0 +1,56 @@
+{
+  "resources":{
+  "includes":[{
+    "pattern":"\\Q.\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.awt.im.spi.InputMethodDescriptor\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.lang.System$LoggerFinder\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.time.zone.ZoneRulesProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/javax.imageio.spi.ImageInputStreamSpi\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/javax.imageio.spi.ImageOutputStreamSpi\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/javax.imageio.spi.ImageReaderSpi\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/javax.imageio.spi.ImageTranscoderSpi\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/javax.imageio.spi.ImageWriterSpi\\E"
+  }, {
+    "pattern":"\\Qimage/background.png\\E"
+  }, {
+    "pattern":"\\Qimage/backgrounddouble.png\\E"
+  }, {
+    "pattern":"\\Qimage/blue1.png\\E"
+  }, {
+    "pattern":"\\Qimage/blue2.png\\E"
+  }, {
+    "pattern":"\\Qimage/game_over.png\\E"
+  }, {
+    "pattern":"\\Qimage/green.png\\E"
+  }, {
+    "pattern":"\\Qimage/orange.png\\E"
+  }, {
+    "pattern":"\\Qimage/pause.png\\E"
+  }, {
+    "pattern":"\\Qimage/purple.png\\E"
+  }, {
+    "pattern":"\\Qimage/red.png\\E"
+  }, {
+    "pattern":"\\Qimage/yellow.png\\E"
+  }, {
+    "pattern":"\\Qimage\\E"
+  }]},
+  "bundles":[{
+    "name":"com.sun.swing.internal.plaf.basic.resources.basic",
+    "classNames":["com.sun.swing.internal.plaf.basic.resources.basic", "com.sun.swing.internal.plaf.basic.resources.basic_zh_CN"]
+  }, {
+    "name":"com.sun.swing.internal.plaf.metal.resources.metal",
+    "classNames":["com.sun.swing.internal.plaf.metal.resources.metal", "com.sun.swing.internal.plaf.metal.resources.metal_zh_CN"]
+  }, {
+    "name":"sun.awt.resources.awt",
+    "classNames":["sun.awt.resources.awt", "sun.awt.resources.awt_zh_CN"]
+  }]
+}

@@ -18,6 +18,7 @@ package org.binave.game.tetris.play;
 
 import org.binave.game.tetris.Start;
 import org.binave.game.tetris.common.ImageLoader;
+import org.binave.game.tetris.common.WindowUtil;
 import org.binave.game.tetris.common.UDPArrayAlter;
 
 import java.awt.Color;
@@ -108,9 +109,7 @@ public class TetrisOnlineClient extends JPanel {
         info = new int[4 + 4 + 4 * 8];
 
         // init
-        for (int i = 0; i < info.length; i++) {
-            info[i] = 1;
-        }
+        Arrays.fill(info, 1);
 
         backGround = new int[p][row];       // 静止方块图片存储数组，会将符合条件的移动方块绘制到此数组上
         try {
@@ -194,7 +193,7 @@ public class TetrisOnlineClient extends JPanel {
                 }
             }
         });
-        this.requestFocus();        // 接收键盘监听事件
+        // Focus is requested in windowOpened event
     }
 
     /**
@@ -213,10 +212,12 @@ public class TetrisOnlineClient extends JPanel {
 //
 
         if (inputIp == null || !inputIp.matches("^[0-9]{1,3}(.[0-9]{1,3}){3}$")) {
-            System.err.println("输入服务端 IP");
+            System.err.printf("Server IP required%n");
             System.exit(1);
         }
 
+        WindowUtil.enableDrag(jf);
+        WindowUtil.requestFocusOnOpen(jf, TetrisOnlineClient.this);
         jf.setVisible(true);        // 显示画面
         action();       // 启动将盘将听
         uaa.link(udp);      // 链接发送、接收数组准备处理

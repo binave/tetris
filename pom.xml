@@ -10,20 +10,38 @@
     <version>1.0.0</version>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <maven.build.timestamp.format>yyMMdd_hhmmss</maven.build.timestamp.format>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.32</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
     <build>
         <finalName>${project.artifactId}-${maven.build.timestamp}</finalName>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.8.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>3.2.4</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -50,9 +68,31 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.0</version>
+                <version>2.22.2</version>
                 <configuration>
                     <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.graalvm.buildtools</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <version>0.10.2</version>
+                <configuration>
+                    <mainClass>org.binave.game.tetris.Start</mainClass>
+                    <imageName>${project.artifactId}</imageName>
+                    <buildArgs>
+                        <buildArg>--no-fallback</buildArg>
+                        <buildArg>--no-server</buildArg>
+                        <buildArg>-H:+UnlockExperimentalVMOptions</buildArg>
+                        <buildArg>-H:-CheckToolchain</buildArg>
+                        <buildArg>-H:+ReportExceptionStackTraces</buildArg>
+                        <buildArg>-H:IncludeResources=fontconfig.*</buildArg>
+                        <!-- 体积优化 -->
+                        <buildArg>-H:+RemoveUnusedSymbols</buildArg>
+                        <buildArg>-R:MaxHeapSize=128m</buildArg>
+                        <buildArg>-R:MaxDirectMemorySize=32m</buildArg>
+                        <buildArg>--gc=epsilon</buildArg>
+                    </buildArgs>
                 </configuration>
             </plugin>
         </plugins>

@@ -21,14 +21,11 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.JarURLConnection;
-import java.net.URL;
-import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * 图片加载器，支持读取本地文件和 jar 包
+ * 图片加载器，支持 JAR 和 Native Image
  *
  * @author by bin jin on 2018/07/02 20:32.
  */
@@ -44,139 +41,137 @@ public class ImageLoader {
      */
     public static BufferedImage[] color = new BufferedImage[7];
 
-    static {
-        try {
+    /**
+     * 已知图片资源列表（编译时确定，兼容 JAR 和 Native Image）
+     */
+    private static final String[] IMAGE_FILES = {
+        "background.png",
+        "backgrounddouble.png",
+        "pause.png",
+        "game_over.png",
+        "red.png",
+        "orange.png",
+        "yellow.png",
+        "green.png",
+        "blue2.png",
+        "blue1.png",
+        "purple.png"
+    };
 
-            Map<String, BufferedImage> imageMap = getImageMap("image");
-            // 加载图片
-            background = imageMap.get("image/background.png");
-            backgroundDual = imageMap.get("image/backgrounddouble.png");
-            pause = imageMap.get("image/pause.png");
-            game_over = imageMap.get("image/game_over.png");
-            color[0] = imageMap.get("image/red.png");
-            color[1] = imageMap.get("image/orange.png");
-            color[2] = imageMap.get("image/yellow.png");
-            color[3] = imageMap.get("image/green.png");
-            color[4] = imageMap.get("image/blue2.png");
-            color[5] = imageMap.get("image/blue1.png");
-            color[6] = imageMap.get("image/purple.png");
+    /**
+     * Native Image 环境标识
+     */
+    private static final boolean IS_NATIVE_IMAGE =
+            System.getProperty("org.graalvm.nativeimage.kind") != null;
+
+    static {
+        // 在 Native Image 环境中显式初始化 ImageIO SPI
+        initImageIOSPI();
+
+        try {
+            Map<String, BufferedImage> imageMap = loadImageMap("image");
+
+            // 加载图片并进行 AOT 兼容性验证
+            background = getImageOrThrow(imageMap, "image/background.png");
+            backgroundDual = getImageOrThrow(imageMap, "image/backgrounddouble.png");
+            pause = getImageOrThrow(imageMap, "image/pause.png");
+            game_over = getImageOrThrow(imageMap, "image/game_over.png");
+            color[0] = getImageOrThrow(imageMap, "image/red.png");
+            color[1] = getImageOrThrow(imageMap, "image/orange.png");
+            color[2] = getImageOrThrow(imageMap, "image/yellow.png");
+            color[3] = getImageOrThrow(imageMap, "image/green.png");
+            color[4] = getImageOrThrow(imageMap, "image/blue2.png");
+            color[5] = getImageOrThrow(imageMap, "image/blue1.png");
+            color[6] = getImageOrThrow(imageMap, "image/purple.png");
+
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to load images", e);
         }
+    }
+
+    /**
+     * 显式初始化 ImageIO SPI，兼容 Native Image 环境
+     * 在普通 JVM 中，SPI 通过 ServiceLoader 自动发现；
+     * 在 Native Image 中，需要触发类加载来注册解码器。
+     */
+    private static void initImageIOSPI() {
+        if (IS_NATIVE_IMAGE) {
+            System.out.printf("[Native Image] Initializing ImageIO SPI...%n");
+        }
+        try {
+            // 通过 Class.forName 触发 PNG 解码器的静态初始化
+            // 这会在 JDK 内部自动注册到 IIORegistry
+            Class.forName("com.sun.imageio.plugins.png.PNGImageReaderSpi");
+        } catch (ClassNotFoundException e) {
+            // 非标准 JDK 可能没有此类
+            if (IS_NATIVE_IMAGE) {
+                System.err.printf("[Native Image] PNGImageReaderSpi not found: %s%n", e.getMessage());
+            }
+        } catch (Exception e) {
+            if (IS_NATIVE_IMAGE) {
+                System.err.printf("[Native Image] ImageIO SPI init warning: %s%n", e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * 获取图片或抛出详细异常（AOT 诊断）
+     */
+    private static BufferedImage getImageOrThrow(Map<String, BufferedImage> imageMap, String key)
+            throws IOException {
+        BufferedImage image = imageMap.get(key);
+        if (image == null) {
+            throw new IOException(String.format(
+                    "Image not loaded: %s%n" +
+                    "In Native Image, check: %n" +
+                    "  1. PNG ImageReader SPI registered (reflect-config.json)%n" +
+                    "  2. Resource embedded (resource-config.json)",
+                    key
+            ));
+        }
+        return image;
     }
 
 
     /**
-     * 通过路径，获得图片
-     *
+     * 通过路径加载图片（兼容 JAR classpath 和 Native Image）
      */
-    private static Map<String, BufferedImage> getImageMap(String path) throws IOException {
+    private static Map<String, BufferedImage> loadImageMap(String path) throws IOException {
 
         Map<String, BufferedImage> imageMap = new HashMap<>();
-        for (String resource : listSources(path)) {
-            InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream(resource);
-            imageMap.put(resource, ImageIO.read(is));
+
+        for (String imageFile : IMAGE_FILES) {
+            String resourcePath = path + "/" + imageFile;
+
+            // 优先从 classpath 加载（JAR 或 Native Image 嵌入资源）
+            InputStream is = ClassLoader.getSystemResourceAsStream(resourcePath);
+            if (is != null) {
+                BufferedImage image = ImageIO.read(is);
+                is.close();
+                // AOT 兼容：ImageIO.read() 在无解码器时返回 null
+                if (image == null) {
+                    throw new IOException(String.format(
+                            "ImageIO.read() returned null for: %s%n" +
+                            "In Native Image, ensure PNGImageReaderSpi is registered.",
+                            resourcePath
+                    ));
+                }
+                imageMap.put(resourcePath, image);
+            } else {
+                // 回退到文件系统（开发环境）
+                File file = new File(path, imageFile);
+                if (file.exists()) {
+                    BufferedImage image = ImageIO.read(file);
+                    if (image == null) {
+                        throw new IOException("ImageIO.read() returned null for file: " + file);
+                    }
+                    imageMap.put(resourcePath, image);
+                } else {
+                    throw new IOException("Resource not found: " + resourcePath);
+                }
+            }
         }
 
         return imageMap;
     }
-
-    /**
-     * 返回一个目录下的所有资源
-     */
-    private static List<String> listSources(String absolutePath) {
-        ClassLoader loader = ClassLoader.getSystemClassLoader();
-
-        Enumeration<URL> dirs;
-        try {
-            dirs = loader.getResources(absolutePath);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-
-        // 当前路径
-        URL pwdUrl = loader.getResource(".");
-
-        List<String> list = new ArrayList<>();
-        while (dirs.hasMoreElements()) {
-            URL url = dirs.nextElement();
-            String protocol = url.getProtocol(); // 得到协议的名称
-
-            // 如果是以文件的形式保存在服务器上
-            if ("file".equals(protocol)) {
-                // 以文件的方式扫描整个包下的文件 并添加到集合中
-                findInDir(list, url.getFile());
-
-            } else if ("jar".equals(protocol)) {
-                // jar 包内容
-                findInJar(list, url, absolutePath);
-            }
-        }
-
-        // 可以获得当前路径
-        if (pwdUrl != null) {
-            List<String> newList = new ArrayList<>();
-            for (String resource : list) {
-                newList.add(
-                        resource.startsWith(pwdUrl.getPath())
-                                ? resource.substring(pwdUrl.getPath().length())
-                                : resource
-                );
-            }
-            list = newList;
-        }
-        return list;
-    }
-
-
-    /**
-     * 获得 jar 文件
-     */
-    private static void findInJar(List<String> list, URL url, String path) {
-        // 如果是jar包文件，定义一个JarFile
-        JarFile jar;
-
-        try {
-            jar = ((JarURLConnection) url.openConnection()).getJarFile();
-        } catch (IOException e) {
-            // 在扫描用户定义视图时从jar包获取文件出错
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-
-        Enumeration<JarEntry> entries = jar.entries();
-        // 同样的进行循环迭代
-        while (entries.hasMoreElements()) {
-            // 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
-            String name = entries.nextElement().getName();
-
-            // 如果是以'/'开头的，获取后面的字符串
-            if (name.charAt(0) == '/') name = name.substring(1);
-            if (name.startsWith(path) && '/' != name.charAt(name.length() - 1)) {
-                // 显示文件，如果以 '/' 结尾，是一个包，跳过
-                list.add(name);
-            }
-        }
-    }
-
-
-    /**
-     * 以文件的形式来获取包下的所有文件
-     * 包含递归
-     */
-    private static void findInDir(List<String> list, String path) {
-        File dir = new File(path);
-        // 如果不存在或者 也不是目录就直接返回
-        if (!dir.exists()) return;
-        if (dir.isDirectory()) {
-            for (File file : dir.listFiles()) {
-                // 如果是目录 则继续扫描
-                if (file.isDirectory()) {
-                    findInDir(list, path + '/' + file.getName());
-                } else list.add(path + '/' + file.getName());
-            }
-        } else list.add(path + '/' + dir.getName());
-    }
-
 }

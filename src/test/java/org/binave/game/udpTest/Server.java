@@ -24,7 +24,7 @@ public class Server {
             socket.receive(recvPacket);
             int dlen = recvPacket.getLength();
             String str = new String(data, 0, dlen, "UTF-8");
-            System.out.println("客户端：" + str);
+            System.out.printf("Client: %s%n", str);
             data = "你好！客户端！".getBytes();
             recvPacket.setData(data);
             socket.send(recvPacket);

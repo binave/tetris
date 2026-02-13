@@ -33,7 +33,7 @@ public class Client {
             socket.receive(recvPacket);
             int dlen = recvPacket.getLength();
             String str = new String(data, 0, dlen, "UTF-8");
-            System.out.println("服务端：" + str);
+            System.out.printf("Server: %s%n", str);
         } catch (IOException ignored) {
         }
 

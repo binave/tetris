@@ -18,6 +18,7 @@ package org.binave.game.tetris.play;
 
 import org.binave.game.tetris.Start;
 import org.binave.game.tetris.common.ImageLoader;
+import org.binave.game.tetris.common.WindowUtil;
 import org.binave.game.tetris.common.UDPArrayAlter;
 import org.binave.game.tetris.entity.Cell;
 import org.binave.game.tetris.entity.Tetromino;
@@ -38,13 +39,13 @@ import javax.swing.*;
 
 /**
  * @version 1.02
- *
- *          由定时触发控制画面刷新和自动下降，
- *          其他动作均由键盘监听主动触发动作。
- *
- *          俄罗斯方块主程序
- *          用于创建方块对象，判断方块越界，画面刷新，键盘监听。
- *          <b>注意：</b>这里的方块指的是由四个格子组成的整体，而格子就是Cell，且格子有存在于背景上和不在背景上两种
+ * <p>
+ * 由定时触发控制画面刷新和自动下降，
+ * 其他动作均由键盘监听主动触发动作。
+ * <p>
+ * 俄罗斯方块主程序
+ * 用于创建方块对象，判断方块越界，画面刷新，键盘监听。
+ * <b>注意：</b>这里的方块指的是由四个格子组成的整体，而格子就是Cell，且格子有存在于背景上和不在背景上两种
  */
 public class TetrisOnlineServer extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -121,7 +122,7 @@ public class TetrisOnlineServer extends JPanel {
         for (int j = 0; j < tetromino.length; j++) {
             tetromino[j][0] = new Tetromino();
             tetromino[j][1] = new Tetromino();
-            tetromino[j][1].tetromino();        // 初始化方块属性
+            tetromino[j][1].init();        // 初始化方块属性
         }
         udpBg = new byte[2][76];        // 1P 或 2P 的背景，消除行数
         udpCell = new byte[18];         // 1P 和 2P 移动方块，预览方块，SP点，胜点
@@ -165,7 +166,7 @@ public class TetrisOnlineServer extends JPanel {
 
         int port = Start.getPort(args[0]);
 
-        System.out.println("监听 " + port + " 端口");
+        System.out.printf("Listening on port %d\n", port);
 
         JFrame frame = new JFrame("Tetris");        // 建立画面
         final TetrisOnlineServer bg = new TetrisOnlineServer(port, 20, 10);   // 设置背景宽高
@@ -175,6 +176,8 @@ public class TetrisOnlineServer extends JPanel {
         frame.setUndecorated(true);         // 去掉边框
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);       // 关闭画面时停止程序
         frame.setLocationRelativeTo(null);
+        WindowUtil.enableDrag(frame);
+        WindowUtil.requestFocusOnOpen(frame, bg);
         frame.setVisible(true);     // 显示画面
         bg.action();                // 调用定时触发和键盘监听
     }
@@ -184,9 +187,9 @@ public class TetrisOnlineServer extends JPanel {
      */
     private void action() {
         Thread receive = new Thread() {         // 重写线程方法
-            private byte[] rec = new byte[1];       // 接收客户端信息的数组
-            private DatagramPacket rdp = new DatagramPacket(rec, rec.length);       // UDP接收包
-            private UDPArrayAlter rua = new UDPArrayAlter();        // 提取接收数组的信息
+            private final byte[] rec = new byte[1];       // 接收客户端信息的数组
+            private final DatagramPacket rdp = new DatagramPacket(rec, rec.length);       // UDP接收包
+            private final UDPArrayAlter rua = new UDPArrayAlter();        // 提取接收数组的信息
 
             public void run() {
                 rua.link(rec);      // 链接接收数组
@@ -200,7 +203,7 @@ public class TetrisOnlineServer extends JPanel {
                             sdp.setPort(ClientPort = rdp.getPort());
                         } else if (
                                 rdp.getAddress().getHostName().equals(sdp.getAddress().getHostName())
-                                ) {
+                        ) {
                             // 判断是否是客户端发送的信息
                             times[2] = 0;       // 重置延迟计数器
                             if (rua.poll()) {   // 如果是客户端键盘指令则读取指令
@@ -275,7 +278,7 @@ public class TetrisOnlineServer extends JPanel {
                 }
             }
         });
-        this.requestFocus();        // 接收键盘监听事件
+        // Focus is requested in windowOpened event
 
         final Timer timer = new Timer();
         timer.schedule(new TimerTask() {    // 定时触发匿名內部類
@@ -320,7 +323,7 @@ public class TetrisOnlineServer extends JPanel {
      * @param i
      */
     private void exchangeTetromino(int i) {
-        tetromino[i][tetId[i]].tetromino();     // 初始化方块属性
+        tetromino[i][tetId[i]].init();     // 初始化方块属性
         tetId[i] = 1 - tetId[i];        // 交换下标
         move(-1, 3, i);     // 修正方块初始坐标
     }
@@ -358,7 +361,7 @@ public class TetrisOnlineServer extends JPanel {
                 sdp.setLength(cutLen[i]);       // 设置有效发送长度
                 if (ClientPort != -1)
                     ds.send(sdp);       // 链接客户端后开始发送数组
-            } catch (IOException e) {
+            } catch (IOException ignored) {
             }
         }
     }
@@ -375,9 +378,9 @@ public class TetrisOnlineServer extends JPanel {
         // 记录键盘按键连按（按住）周期。
         leftTimes[i] = turnLeft[i] ? leftTimes[i] + 1 : 0;
         rightTimes[i] = turnRight[i] ? rightTimes[i] + 1 : 0;
-        for (Cell t : tetromino[i][tetId[i]].cells) {// 遍历移动方块的格子
-            if (!allowDrop[i] && t.row >= 0 && (autoDrop[i] || turnDrop[i])) {// 方块下方为边界或背景方块：
-                backGround[i][t.row][t.col] = tetromino[i][tetId[i]].imgColor;      // 将方块的颜色信息存入背景数组
+        for (Cell t : tetromino[i][tetId[i]].getCells()) {// 遍历移动方块的格子
+            if (!allowDrop[i] && t.getRow() >= 0 && (autoDrop[i] || turnDrop[i])) {// 方块下方为边界或背景方块：
+                backGround[i][t.getRow()][t.getColumn()] = tetromino[i][tetId[i]].getImgColor();      // 将方块的颜色信息存入背景数组
                 if (++index == 4) {// 循环四次后执行
                     HardDrop[i] = false;        // 停止自我循环
                     subLine(i);     // 去行
@@ -386,14 +389,14 @@ public class TetrisOnlineServer extends JPanel {
                 }
             } else {
                 // 如果左移被允许，并且不处于按键连按第二周期，则方块左移
-                t.col += leftTimes[i] != 2 && turnLeft[i] && allowLeft[i] ? -1 : 0;
+                t.incrByColumn(leftTimes[i] != 2 && turnLeft[i] && allowLeft[i] ? -1 : 0);
                 // 同上右移
-                t.col += rightTimes[i] != 2 && turnRight[i] && allowRight[i] ? 1 : 0;
+                t.incrByColumn(rightTimes[i] != 2 && turnRight[i] && allowRight[i] ? 1 : 0);
                 // 如果自动下落或手动下落被允许，则方块下落
-                t.row += (turnDrop[i] || autoDrop[i]) && allowDrop[i] ? 1 : 0;
+                t.incrByRow((turnDrop[i] || autoDrop[i]) && allowDrop[i] ? 1 : 0);
             }
             // 如果方块中的格子处在 -1 行上，则不允许一降到底
-            HardDrop[i] = t.row < 0 ? false : HardDrop[i];
+            HardDrop[i] = t.getRow() >= 0 && HardDrop[i];
         }
         if (HardDrop[i]) {// 如果允许一降到底，则自我循环
             autoDrop[i] = true;     // 开启自动下落
@@ -402,9 +405,9 @@ public class TetrisOnlineServer extends JPanel {
     }
 
     private void move(int row, int col, int i) { // 传入坐标组并修正初始位置
-        for (Cell t : tetromino[i][tetId[i]].cells) {
-            t.row += row;
-            t.col += col;
+        for (Cell t : tetromino[i][tetId[i]].getCells()) {
+            t.incrByRow(row);
+            t.incrByColumn(col);
         }
     }
 
@@ -448,12 +451,12 @@ public class TetrisOnlineServer extends JPanel {
                 moveLine(line4, i);     // 传出第四行数组的地址
                 break;
             case 4:
-                sP[1 - i] = sP[1 - i] - sP[i] / 2 > 0 ? sP[1 - i] - sP[i] / 2 : 0;      // 扣掉对手sP点
+                sP[1 - i] = Math.max(sP[1 - i] - sP[i] / 2, 0);      // 扣掉对手sP点
                 sP[i] += 7;     // 获得七个sP
                 hard[1 - i] = 60;       // 给对手加速五秒
                 break;
         }
-        sP[i] = sP[i] > 30 ? 30 : sP[i];        // 限制 SP 个数为三十
+        sP[i] = Math.min(sP[i], 30);        // 限制 SP 个数为三十
         sandLine(i);        // 发送背景数组
     }
 
@@ -495,20 +498,20 @@ public class TetrisOnlineServer extends JPanel {
      * 左、右、下、旋转越界、重叠判断。 遍历方块，测试方块周围的状态并依此设置方块动作开关。 当动作开关为 false 时，将不允许执行相应的動作。
      */
     private void limit(int i) {
-        for (Cell t : tetromino[i][tetId[i]].cells) {
-            if (t.row < 0) {// 如果方块处在上边界之上，则仅允许自动下落
+        for (Cell t : tetromino[i][tetId[i]].getCells()) {
+            if (t.getRow() < 0) {// 如果方块处在上边界之上，则仅允许自动下落
                 turnLeft[i] = turnRight[i] = turnDrop[i] = HardDrop[i] = false;
                 break;
             }
             if (turnLeft[i]
-                    && (t.row < 0 || t.col == 0 || backGround[i][t.row][t.col - 1] != 0))// 同上，左面
+                    && (t.getRow() < 0 || t.getColumn() == 0 || backGround[i][t.getRow()][t.getColumn() - 1] != 0))// 同上，左面
                 // 如果方块左方是边界或方块，则关闭左移开关
                 allowLeft[i] = false;
             if (turnRight[i]
-                    && (t.row < 0 || t.col == width - 1 || backGround[i][t.row][t.col + 1] != 0))// 同上，右面
+                    && (t.getRow() < 0 || t.getColumn() == width - 1 || backGround[i][t.getRow()][t.getColumn() + 1] != 0))// 同上，右面
                 // 如果方块右方是边界或方块，则关闭右移开关
                 allowRight[i] = false;
-            if (t.row == height - 1 || backGround[i][t.row + 1][t.col] != 0)
+            if (t.getRow() == height - 1 || backGround[i][t.getRow() + 1][t.getColumn()] != 0)
                 // 如果方块下方是边界或方块，则关闭下降开关
                 allowDrop[i] = false;
         }
@@ -522,22 +525,22 @@ public class TetrisOnlineServer extends JPanel {
     private void rotateRight(int i) {
         // 初始化空列计数器，获得背景数组长宽。
         int tmp, amend = 0, rowMin = height, colMin = width;
-        for (Cell t : tetromino[i][tetId[i]].cells) {// 获得下落方块距 0,0 点最短距离
-            rowMin = t.row < rowMin ? t.row : rowMin; // 获取距 0,0 点最小 row 值
-            colMin = t.col < colMin ? t.col : colMin;       // 获取距 0,0 点最小 col 值
+        for (Cell t : tetromino[i][tetId[i]].getCells()) {// 获得下落方块距 0,0 点最短距离
+            rowMin = Math.min(t.getRow(), rowMin); // 获取距 0,0 点最小 row 值
+            colMin = Math.min(t.getColumn(), colMin);       // 获取距 0,0 点最小 col 值
         }
-        for (Cell t : tetromino[i][tetId[i]].cells) {// 交換 row 與 col 坐標
-            tmp = t.row - rowMin;
-            t.row = t.col - colMin + rowMin; // 将 col 值赋予 row
-            t.col = 2 - tmp + colMin; // 将左右翻转后的 row 值赋予 col
-            amend += colMin != t.col ? 1 : 0;       // 记录左一列是否为空
+        for (Cell t : tetromino[i][tetId[i]].getCells()) {// 交換 row 與 col 坐標
+            tmp = t.getRow() - rowMin;
+            t.setRow(t.getColumn() - colMin + rowMin); // 将 col 值赋予 row
+            t.setColumn(2 - tmp + colMin); // 将左右翻转后的 row 值赋予 col
+            amend += colMin != t.getColumn() ? 1 : 0;       // 记录左一列是否为空
         }
         if (amend == 4)// 如果左一列均为空
             move(0, -1, i);     // 方块左移
         if (turnRotate[i]) // 防止此方法自我循环时执行此处
-            for (Cell t : tetromino[i][tetId[i]].cells) {// 測試是否越界、重合
-                if (t.row > height - 1 || t.row < 0 || t.col > width - 1
-                        || t.col < 0 || backGround[i][t.row][t.col] != 0)
+            for (Cell t : tetromino[i][tetId[i]].getCells()) {// 測試是否越界、重合
+                if (t.getRow() > height - 1 || t.getRow() < 0 || t.getColumn() > width - 1
+                        || t.getColumn() < 0 || backGround[i][t.getRow()][t.getColumn()] != 0)
                     // 如果下落方块越界，或与背景中静态方块重合则关闭旋转开关
                     turnRotate[i] = false;
             }
@@ -545,11 +548,11 @@ public class TetrisOnlineServer extends JPanel {
             rotateRight(i);     // 递归触发本方法
     }
 
-    private Font[] font = {new Font("Monospaced", Font.BOLD, 15),
+    private final Font[] font = {new Font("Monospaced", Font.BOLD, 15),
             new Font("Monospaced", Font.BOLD, 20),
             new Font("Monospaced", Font.BOLD, 35)};     // 设置文字大小字体等
 
-    private Color[] fontColor = {new Color(0x333777), new Color(0x777333),
+    private final Color[] fontColor = {new Color(0x333777), new Color(0x777333),
             new Color(0x777777)};       // 设置文字颜色
 
     /**
@@ -581,39 +584,39 @@ public class TetrisOnlineServer extends JPanel {
         sua.offer(sP[1], 5);        // 2P 的SP点
         sua.offer(win[0 + 2], 5);       // 1P 胜点
         sua.offer(win[1 + 2], 5);       // 2P 胜点
-        sua.offer(t[0].imgColor, 3);        // 1P 预览方块颜色
-        sua.offer(t[1].imgColor, 3);        // 1P 移动方块颜色
-        sua.offer(t[2].imgColor, 3);        // 2P 预览方块颜色
-        sua.offer(t[3].imgColor, 3);        // 2P 移动方块颜色
+        sua.offer(t[0].getImgColor(), 3);        // 1P 预览方块颜色
+        sua.offer(t[1].getImgColor(), 3);        // 1P 移动方块颜色
+        sua.offer(t[2].getImgColor(), 3);        // 2P 预览方块颜色
+        sua.offer(t[3].getImgColor(), 3);        // 2P 移动方块颜色
         for (int j = 0; j < 4; j++) {
-            Cell[] c = {t[0].cells[j], t[1].cells[j], t[2].cells[j],
-                    t[3].cells[j]};
+            Cell[] c = {t[0].getCells()[j], t[1].getCells()[j], t[2].getCells()[j],
+                    t[3].getCells()[j]};
             // 在背景上绘制方块，根据对象的 imgColor 属性绘制 color 数组中对应下标的图片。
-            g.drawImage(ImageLoader.color[t[0].imgColor - 1], c[0].col * booboo + 340, c[0].row
+            g.drawImage(ImageLoader.color[t[0].getImgColor() - 1], c[0].getColumn() * booboo + 340, c[0].getRow()
                     * booboo + booboo + 23, null);
-            sua.offer(c[0].col, 2);     // 加入预览方块列坐标
-            sua.offer(c[0].row, 1);
-            if (c[1].row > -1)// 仅显示零行及以下的方块
-                g.drawImage(ImageLoader.color[t[1].imgColor - 1], c[1].col * booboo, c[1].row
+            sua.offer(c[0].getColumn(), 2);     // 加入预览方块列坐标
+            sua.offer(c[0].getRow(), 1);
+            if (c[1].getRow() > -1)// 仅显示零行及以下的方块
+                g.drawImage(ImageLoader.color[t[1].getImgColor() - 1], c[1].getColumn() * booboo, c[1].getRow()
                         * booboo + booboo, null);
-            sua.offer(c[1].col + 1, 4);     // 防止出现负数
-            sua.offer(c[1].row + 1, 5);
-            g.drawImage(ImageLoader.color[t[2].imgColor - 1], c[2].col * booboo + 340, c[2].row
+            sua.offer(c[1].getColumn() + 1, 4);     // 防止出现负数
+            sua.offer(c[1].getRow() + 1, 5);
+            g.drawImage(ImageLoader.color[t[2].getImgColor() - 1], c[2].getColumn() * booboo + 340, c[2].getRow()
                     * booboo + booboo + 275, null);
-            sua.offer(c[2].col, 2);
-            sua.offer(c[2].row, 1);
-            if (c[3].row > -1)
-                g.drawImage(ImageLoader.color[t[3].imgColor - 1], c[3].col * booboo + 512,
-                        c[3].row * booboo + booboo, null);
-            sua.offer(c[3].col + 1, 4);
-            sua.offer(c[3].row + 1, 5);
+            sua.offer(c[2].getColumn(), 2);
+            sua.offer(c[2].getRow(), 1);
+            if (c[3].getRow() > -1)
+                g.drawImage(ImageLoader.color[t[3].getImgColor() - 1], c[3].getColumn() * booboo + 512,
+                        c[3].getRow() * booboo + booboo, null);
+            sua.offer(c[3].getColumn() + 1, 4);
+            sua.offer(c[3].getRow() + 1, 5);
         }
         try {
             sdp.setData(udpCell);       // 设定预发送数组
             sdp.setLength(sua.close());     // 设定发送数组有效长度
             if (ClientPort != -1)
                 ds.send(sdp);       // 向客户端发送移动方块和预览方块信息
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
 
         // 绘制背景，根据背景数组中的值调用 color 数组中相应下标的图片绘制于背景之上

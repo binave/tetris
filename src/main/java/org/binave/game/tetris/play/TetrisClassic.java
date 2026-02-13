@@ -17,6 +17,7 @@
 package org.binave.game.tetris.play;
 
 import org.binave.game.tetris.common.ImageLoader;
+import org.binave.game.tetris.common.WindowUtil;
 import org.binave.game.tetris.entity.Cell;
 import org.binave.game.tetris.entity.Tetromino;
 
@@ -33,7 +34,7 @@ import javax.swing.*;
 
 /**
  * @version 1.02
- *          由定时触发控制画面刷新和自动下降，其他动作均由键盘监听主动触发动作。
+ * 由定时触发控制画面刷新和自动下降，其他动作均由键盘监听主动触发动作。
  */
 public class TetrisClassic extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -46,7 +47,7 @@ public class TetrisClassic extends JPanel {
     /**
      * 声明方块数组
      */
-    private Tetromino[] tetromino;
+    private final Tetromino[] tetromino;
     /**
      * 声明游戏状态
      */
@@ -71,9 +72,9 @@ public class TetrisClassic extends JPanel {
     /**
      * 背景方块图片存储数组
      */
-    private byte[][] backGround;
-    private int width;
-    private int height;
+    private final byte[][] backGround;
+    private final int width;
+    private final int height;
     /**
      * 方块组交替下标
      */
@@ -96,7 +97,7 @@ public class TetrisClassic extends JPanel {
         tetromino = new Tetromino[2];       // 建立两个方块对象，分别用于控制下落或预览，并可交换彼此
         tetromino[0] = new Tetromino();     // 预交换方块1
         tetromino[1] = new Tetromino();     // 预交换方块2
-        tetromino[1 - i].tetromino();       // 初始化方块属性
+        tetromino[1 - i].init();       // 初始化方块属性
         state = ImageLoader.background;     // 默认背景
         allowDrop = true;
         gameStart = true;       // 允许游戏进行
@@ -117,6 +118,8 @@ public class TetrisClassic extends JPanel {
         frame.setUndecorated(true);     // 去掉边框
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);       // 关闭画面时停止程序
         frame.setLocationRelativeTo(null);
+        WindowUtil.enableDrag(frame);
+        WindowUtil.requestFocusOnOpen(frame, bg);
         frame.setVisible(true);     // 显示画面
         bg.action();        // 调用定时触发和键盘监听
     }
@@ -180,7 +183,7 @@ public class TetrisClassic extends JPanel {
                 }
             }
         });
-        this.requestFocus();        // 接收键盘监听事件
+        // Focus is requested in windowOpened event
 
         final Timer timer = new Timer();
         timer.schedule(new TimerTask() { // 定时触发匿名內部類
@@ -218,9 +221,9 @@ public class TetrisClassic extends JPanel {
     }
 
     private void exchangeTetromino() {      // 【交换预览方块与下落方块】
-        tetromino[i].tetromino();       // 初始化方块属性
+        tetromino[i].init();       // 初始化方块属性
         i = 1 - i;      // 交换下标
-        move(-1, 3);        // 修正方块初始坐标
+        moveTo(-1, 3);        // 修正方块初始坐标
     }
 
     private void start() {
@@ -230,18 +233,18 @@ public class TetrisClassic extends JPanel {
         rotate = 3;     // 初始化旋转计数器为3
         if (turnRotate) // 如果允许旋转
             rotateRight();      // 进行顺时针九十度旋转
-        move();
+        moveTo();
         // 关闭开关变量
         autoDrop = turnRotate = false;
     }
 
-    private void move() {       // 【接收动作指令并执行合理的指令】
+    private void moveTo() {       // 【接收动作指令并执行合理的指令】
         allowLeft = allowRight = allowDrop = true;      // 初始化下降触碰开关
         limit();        // 测试越界并赋予动作开关状态
         int index = 0;      // 初始化临时计数器
-        for (Cell t : tetromino[i].cells) {     // 遍历移动方块的格子
-            if (!allowDrop && t.row >= 0 && (autoDrop || turnDrop)) {       // 方块下方为边界或背景方块：
-                backGround[t.row][t.col] = t.img;       // 将方块的颜色信息存入背景数组
+        for (Cell t : tetromino[i].getCells()) {     // 遍历移动方块的格子
+            if (!allowDrop && t.getRow() >= 0 && (autoDrop || turnDrop)) {       // 方块下方为边界或背景方块：
+                backGround[t.getRow()][t.getColumn()] = t.getImg();       // 将方块的颜色信息存入背景数组
                 if (++index == 4) {     // 循环四次后执行
                     hardDrop = false;       // 停止自我循环
                     subLine();      // 减行
@@ -249,23 +252,23 @@ public class TetrisClassic extends JPanel {
                     return;
                 }
             } else {
-                t.col += turnLeft && allowLeft ? -1 : 0;        // 如果左移被允许，则方块左移
-                t.col += turnRight && allowRight ? 1 : 0;       // 如果右移被允许，则方块右移
-                t.row += (autoDrop || turnDrop) && allowDrop ? 1 : 0;       // 如果自动下落或手动下落被允许，则方块下落
+                t.setColumn(t.getColumn() + (turnLeft && allowLeft ? -1 : 0));        // 如果左移被允许，则方块左移
+                t.setColumn(t.getColumn() + (turnRight && allowRight ? 1 : 0));       // 如果右移被允许，则方块右移
+                t.setRow(t.getRow() + ((autoDrop || turnDrop) && allowDrop ? 1 : 0));       // 如果自动下落或手动下落被允许，则方块下落
             }
             // 如果方块中的格子处在 -1 行上，则不允许一降到底
-            hardDrop = t.row >= 0 && hardDrop;
+            hardDrop = t.getRow() >= 0 && hardDrop;
         }
         if (hardDrop) {     // 如果允许一降到底，则自我循环
             autoDrop = true;        // 开启自动下落
-            move();     // 触发本方法
+            moveTo();     // 触发本方法
         }
     }
 
-    public void move(int row, int col) { // 传入坐标组并修正初始位置
-        for (Cell t : tetromino[i].cells) {
-            t.row += row;
-            t.col += col;
+    public void moveTo(int row, int col) { // 传入坐标组并修正初始位置
+        for (Cell t : tetromino[i].getCells()) {
+            t.setRow(t.getRow() + row);
+            t.setColumn(t.getColumn() + col);
         }
     }
 
@@ -309,7 +312,7 @@ public class TetrisClassic extends JPanel {
                 sP += 6;
                 break;
         }
-        sP = sP > 30 ? 30 : sP;        // 限制 SP 个数为三十
+        sP = Math.min(sP, 30);        // 限制 SP 个数为三十
 
     }
 
@@ -317,18 +320,18 @@ public class TetrisClassic extends JPanel {
      * 左、右、下、旋转越界、重叠判断. 遍历方块，测试方块周围的状态并依此设置方块动作开关 。 当动作开关为 false时，将不允许执行相应的動作。
      */
     private void limit() {
-        for (Cell t : tetromino[i].cells) {
-            if (t.row < 0) {        // 如果方块处在上边界之上，则仅允许自动下落
+        for (Cell t : tetromino[i].getCells()) {
+            if (t.getRow() < 0) {        // 如果方块处在上边界之上，则仅允许自动下落
                 allowLeft = allowRight = turnDrop = hardDrop = false;
                 break;
             }
-            if (turnLeft && (t.col == 0 || backGround[t.row][t.col - 1] != 0))  // 同上，左面
+            if (turnLeft && (t.getColumn() == 0 || backGround[t.getRow()][t.getColumn() - 1] != 0))  // 同上，左面
                 // 如果方块左方是边界或方块，则关闭左移开关
                 allowLeft = false;
-            if (turnRight && (t.col == backGround[0].length - 1 || backGround[t.row][t.col + 1] != 0))   // 同上，右面
+            if (turnRight && (t.getColumn() == backGround[0].length - 1 || backGround[t.getRow()][t.getColumn() + 1] != 0))   // 同上，右面
                 // 如果方块右方是边界或方块，则关闭右移开关
                 allowRight = false;
-            if (t.row == height - 1 || backGround[t.row + 1][t.col] != 0)
+            if (t.getRow() == height - 1 || backGround[t.getRow() + 1][t.getColumn()] != 0)
                 // 如果方块下方是边界或方块，则关闭下降开关
                 allowDrop = false;
         }
@@ -342,25 +345,27 @@ public class TetrisClassic extends JPanel {
     private void rotateRight() {
         // 初始化空列计数器，获得背景数组长宽。
         int tmp, amend = 0, rowMin = height, colMin = backGround[0].length;
-        for (Cell t : tetromino[i].cells) {             // 获得下落方块距 0,0 点最短距离
-            rowMin = t.row < rowMin ? t.row : rowMin;   // 获取距 0,0 点最小 row 值
-            colMin = t.col < colMin ? t.col : colMin;   // 获取距 0,0 点最小 col 值
+        for (Cell t : tetromino[i].getCells()) {             // 获得下落方块距 0,0 点最短距离
+            rowMin = Math.min(t.getRow(), rowMin);   // 获取距 0,0 点最小 row 值
+            colMin = Math.min(t.getColumn(), colMin);   // 获取距 0,0 点最小 col 值
         }
-        for (Cell t : tetromino[i].cells) {     // 交換 row 與 col 坐標
-            tmp = t.row - rowMin;
-            t.row = t.col - colMin + rowMin;    // 将 col 值赋予 row
-            t.col = 2 - tmp + colMin;           // 将左右翻转后的 row 值赋予 col
-            amend += colMin != t.col ? 1 : 0;   // 记录左一列是否为空
+        for (Cell t : tetromino[i].getCells()) {     // 交換 row 與 col 坐標
+            tmp = t.getRow() - rowMin;
+            t.setRow(t.getColumn() - colMin + rowMin);    // 将 col 值赋予 row
+            t.setColumn(2 - tmp + colMin);           // 将左右翻转后的 row 值赋予 col
+            amend += colMin != t.getColumn() ? 1 : 0;   // 记录左一列是否为空
         }
         if (amend == 4)                 // 如果左一列均为空
-            move(0, -1);       // 方块左移
+            moveTo(0, -1);       // 方块左移
         if (turnRotate) // 防止此方法自我循环时执行此处
-            for (Cell t : tetromino[i].cells) {     // 測試是否越界、重合
-                if (t.row > height - 1 || t.row < 0
-                        || t.col > backGround[0].length - 1 || t.col < 0
-                        || backGround[t.row][t.col] != 0)
+            for (Cell t : tetromino[i].getCells()) {     // 測試是否越界、重合
+                if (t.getRow() > height - 1 || t.getRow() < 0
+                        || t.getColumn() > backGround[0].length - 1 || t.getColumn() < 0
+                        || backGround[t.getRow()][t.getColumn()] != 0) {
                     // 如果下落方块越界，或与背景中静态方块重合则关闭旋转开关
                     turnRotate = false;
+                    break;
+                }
             }
         if (!turnRotate && rotate-- > 0)    // 如果旋转开关关闭，则再旋转三次回到原位
             rotateRight();      // 触发本方法
@@ -380,14 +385,14 @@ public class TetrisClassic extends JPanel {
         g.drawString("Level: " + (level + 1), 310, 285); // 显示行数
         g.translate(15, -12); // 调整相对位置
 
-        for (int j = 0; j < tetromino[1 - i].cells.length; j++) {
-            Cell t0 = tetromino[1 - i].cells[j];
-            Cell t1 = tetromino[i].cells[j];
+        for (int j = 0; j < tetromino[1 - i].getCells().length; j++) {
+            Cell t0 = tetromino[1 - i].getCells()[j];
+            Cell t1 = tetromino[i].getCells()[j];
             // 在背景上绘制预览方块，根据对象的 imgColor 属性绘制 color 数组中对应下标的图片。
-            g.drawImage(ImageLoader.color[t0.img - 1], t0.col * booboo + 340, t0.row
+            g.drawImage(ImageLoader.color[t0.getImg() - 1], t0.getColumn() * booboo + 340, t0.getRow()
                     * booboo + booboo + 23, null);
-            if (t1.row > -1)
-                g.drawImage(ImageLoader.color[t1.img - 1], t1.col * booboo, t1.row * booboo
+            if (t1.getRow() > -1)
+                g.drawImage(ImageLoader.color[t1.getImg() - 1], t1.getColumn() * booboo, t1.getRow() * booboo
                         + booboo, null);
         }
         for (int row = height - 1; row >= 0; row--) {

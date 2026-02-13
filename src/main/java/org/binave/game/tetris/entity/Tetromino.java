@@ -25,13 +25,21 @@ import java.util.Random;
 public class Tetromino {
 
     /* 建立格子数组 */
-    public Cell[] cells;
+    private Cell[] cells;
 
     /* 方块颜色图片 */
-    public byte imgColor;
+    private byte imgColor;
+
+    public Cell[] getCells() {
+        return cells;
+    }
+
+    public byte getImgColor() {
+        return imgColor;
+    }
 
     /* 准备随机数 */
-    private Random ran = new Random();
+    private final Random ran = new Random();
 
     public Tetromino() {
         // 将四个格子组成一个方块
@@ -42,42 +50,44 @@ public class Tetromino {
     }
 
     /**
-     * 随机生成 7 种方块之一
-     * 除了I型以外，其他六种方块都会占用 三行 两列
-     * 如果排除 row = 1，col = 1 点，
-     * row = 0，col = 0 点 与其余任意一点构成“阴文”，
-     * 再用三行两列排除这两个阴文得到的“阳文”就是三种方块之一
-     * 而 使用 row = 0，col = 2 则可依样生成另外三种方块。
+     * 随机 7 种形状和若干颜色
+     * <p>
+     * 除了 I 型以外，其他六种形状都会占用三行两列。
+     * 先排除 row = 1，column = 1 的点。
+     * <p>
+     * 排除 row = 0，column = 0 点与其余任意一点，剩余的点可以组成 Z L O T 四种方块之一。
+     * 如果排除 row = 0，column = 2 点与其余任意一点，则可生成相反朝向的四种方块（包括两种“田”）。
      */
-    public void tetromino() {
-        // 初始化“阴文”col 值达到左右颠倒的效果
-        int col, row, times = 0, index = 0, lock = ran.nextInt(2) == 0 ? 2 : 0;
+    public void init() {
+        int column, row, times = 0;
+
+        int lock = ran.nextInt(2) == 0 ? 2 : 0; // 决定方块朝向
+
         imgColor = (byte) (ran.nextInt(7) + 1); // 存储随机图片下标
 
-        // 给其中的 cell 颜色赋值
-        for (Cell cell : cells) {
-            cell.img = imgColor;
-        }
-
-        do { // 确定另一个“阴文”
+        do { // 确定 row = 0，col = 0 以外的另一个需要排除的点。
             row = ran.nextInt(2);
-            col = ran.nextInt(3);
+            column = ran.nextInt(3);
             times++;
-        } while (row == 1 && col == 1 || row == 0 && col == lock);
+        } while ((row == 1 && column == 1) || (row == 0 && column == lock));
+
         if (times > 2) {
             // 当重复次数超过三次生成 I 型
             for (int i = 0; i < 4; i++) {
-                cells[i].row = 0;
-                cells[i].col = i;
+                cells[i].setRow(0);
+                cells[i].setColumn(i);
+                cells[i].setImg(imgColor);
             }
         } else {
-            // 利用“阴文”生成“阳文”，产生 Z L O T 正反之一
-            for (int i = 0; i < 2; i++) {
-                for (int j = 0; j < 3; j++) {
-                    if (!(i == row && j == col || i == 0 && j == lock)) {
-                        cells[index].row = i;
-                        cells[index].col = j;
-                        index++;
+            // 刨除排除的点，产生正反 Z L O T 之一
+            int i = 0;
+            for (int j = 0; j < 2; j++) {
+                for (int k = 0; k < 3; k++) {
+                    if (!(j == row && k == column || j == 0 && k == lock)) {
+                        cells[i].setRow(j);
+                        cells[i].setColumn(k);
+                        cells[i].setImg(imgColor);
+                        i++;
                     }
                 }
             }

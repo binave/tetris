@@ -7,11 +7,16 @@
 # Avoid ignoring some suffix
 !*.gradle
 !*.java
+!*.json
 !*.png
 !*.xml
 
 # Avoid ignoring default file
+!.editorconfig
+!.gitattributes
 !.gitignore
+!.gitmodules
+!build.cmd
 !LICENSE
 !README.md
 
