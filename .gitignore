@@ -19,6 +19,7 @@
 !build.cmd
 !LICENSE
 !README.md
+!README.zh-CN.md
 
 # Ignore some directory
 .*/

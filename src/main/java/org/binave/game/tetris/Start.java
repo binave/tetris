@@ -42,11 +42,11 @@ public class Start {
         if (javaHome == null) {
             javaHome = System.getenv("JAVA_HOME");
         }
-        // 无论 java.home 是否为空，都生成字体配置到 exe 所在目录
-        String exeDir = getExeDirectory();
-        ensureFontConfig(exeDir);
+        // 无论 java.home 是否为空，都生成字体配置到临时目录
+        String fontConfigDir = getFontConfigDir();
+        ensureFontConfig(fontConfigDir);
         if (javaHome == null) {
-            System.setProperty("java.home", exeDir);
+            System.setProperty("java.home", fontConfigDir);
         }
 
         if (args == null || args.length == 0) {
@@ -151,22 +151,14 @@ public class Start {
     }
 
     /**
-     * 获取可执行文件所在目录（兼容 jar 和 Native Image）
+     * 获取字体配置目录（临时目录 + 应用唯一标识）
+     * 格式: $TEMP/tetris-e8f4a2b1/lib/
      */
-    private static String getExeDirectory() {
-        // Native Image: java.home 已设置为 exe 所在目录
-        String javaHome = System.getProperty("java.home");
-        if (javaHome != null) {
-            return javaHome;
-        }
-        // jar 模式: 使用 user.dir 或代码位置
-        try {
-            String path = Start.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-            File file = new File(path);
-            return file.isDirectory() ? file.getAbsolutePath() : file.getParent();
-        } catch (Exception e) {
-            return System.getProperty("user.dir");
-        }
+    private static String getFontConfigDir() {
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        // 使用应用名 + 固定 UUID 避免与其他应用冲突
+        String appDir = "tetris-e8f4a2b1";
+        return new File(tmpDir, appDir).getAbsolutePath();
     }
 
     /**
