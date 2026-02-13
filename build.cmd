@@ -35,6 +35,15 @@ call "%_VC_VARS_PATH%\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
 mvn clean native:compile -DskipTests
 echo,
 
+
+@REM if exist "target\tetris.exe" (
+@REM     echo Changing subsystem to WINDOWS...
+@REM     editbin /SUBSYSTEM:WINDOWS target\tetris.exe
+@REM     if errorlevel 1 (
+@REM         >&2 echo Warning: editbin failed, terminal window will be shown
+@REM     )
+@REM )
+
 endlocal
 exit /b 0
 

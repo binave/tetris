@@ -45,17 +45,17 @@ public class ImageLoader {
      * 已知图片资源列表（编译时确定，兼容 JAR 和 Native Image）
      */
     private static final String[] IMAGE_FILES = {
-        "background.png",
-        "backgrounddouble.png",
-        "pause.png",
-        "game_over.png",
-        "red.png",
-        "orange.png",
-        "yellow.png",
-        "green.png",
-        "blue2.png",
-        "blue1.png",
-        "purple.png"
+            "background.png",
+            "backgrounddouble.png",
+            "pause.png",
+            "game_over.png",
+            "red.png",
+            "orange.png",
+            "yellow.png",
+            "green.png",
+            "blue2.png",
+            "blue1.png",
+            "purple.png"
     };
 
     /**
@@ -84,7 +84,11 @@ public class ImageLoader {
             color[5] = getImageOrThrow(imageMap, "image/blue1.png");
             color[6] = getImageOrThrow(imageMap, "image/purple.png");
 
-        } catch (IOException e) {
+        } catch (Throwable e) {
+            System.err.printf("ImageLoader FAILED: %s, %s%n", e.getClass().getName(), e.getMessage());
+            for (StackTraceElement ste : e.getStackTrace()) {
+                System.err.printf("  at %s", ste.toString());
+            }
             throw new RuntimeException("Failed to load images", e);
         }
     }
@@ -95,9 +99,6 @@ public class ImageLoader {
      * 在 Native Image 中，需要触发类加载来注册解码器。
      */
     private static void initImageIOSPI() {
-        if (IS_NATIVE_IMAGE) {
-            System.out.printf("[Native Image] Initializing ImageIO SPI...%n");
-        }
         try {
             // 通过 Class.forName 触发 PNG 解码器的静态初始化
             // 这会在 JDK 内部自动注册到 IIORegistry
@@ -123,9 +124,9 @@ public class ImageLoader {
         if (image == null) {
             throw new IOException(String.format(
                     "Image not loaded: %s%n" +
-                    "In Native Image, check: %n" +
-                    "  1. PNG ImageReader SPI registered (reflect-config.json)%n" +
-                    "  2. Resource embedded (resource-config.json)",
+                            "In Native Image, check: %n" +
+                            "  1. PNG ImageReader SPI registered (reflect-config.json)%n" +
+                            "  2. Resource embedded (resource-config.json)",
                     key
             ));
         }
@@ -152,7 +153,7 @@ public class ImageLoader {
                 if (image == null) {
                     throw new IOException(String.format(
                             "ImageIO.read() returned null for: %s%n" +
-                            "In Native Image, ensure PNGImageReaderSpi is registered.",
+                                    "In Native Image, ensure PNGImageReaderSpi is registered.",
                             resourcePath
                     ));
                 }

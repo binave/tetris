@@ -38,16 +38,25 @@ import javax.swing.*;
  */
 public class TetrisClassic extends JPanel {
     private static final long serialVersionUID = 1L;
+    /**
+     * 方块显示位置修正
+     */
+    private static final int booboo = 26;
     private static int times;       // 次数记录，用于调整自动下落频率
     /**
      * 以下声明静态图片
      */
     private static BufferedImage state;
-
     /**
      * 声明方块数组
      */
     private final Tetromino[] tetromino;
+    /**
+     * 背景方块图片存储数组
+     */
+    private final byte[][] backGround;
+    private final int width;
+    private final int height;
     /**
      * 声明游戏状态
      */
@@ -65,16 +74,6 @@ public class TetrisClassic extends JPanel {
     private boolean autoDrop;       // 自动下落开关，定时触发
     private boolean allowDrop;      // 下降触碰开关
     private boolean turnRotate;     // 允许旋转开关，手动触发
-    /**
-     * 方块显示位置修正
-     */
-    private static final int booboo = 26;
-    /**
-     * 背景方块图片存储数组
-     */
-    private final byte[][] backGround;
-    private final int width;
-    private final int height;
     /**
      * 方块组交替下标
      */
@@ -110,18 +109,32 @@ public class TetrisClassic extends JPanel {
      * 经典俄罗斯方块【入口】
      */
     public static void main(String[] args) {
-        JFrame frame = new JFrame("Tetris");        // 建立画面
-        final TetrisClassic bg = new TetrisClassic(20, 10);     // 设置背景宽高
-        frame.add(bg);
-        frame.setSize(ImageLoader.background.getWidth(), ImageLoader.background.getHeight());       // 布画大小
-        frame.setAlwaysOnTop(true);     // 总在最上面
-        frame.setUndecorated(true);     // 去掉边框
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);       // 关闭画面时停止程序
-        frame.setLocationRelativeTo(null);
-        WindowUtil.enableDrag(frame);
-        WindowUtil.requestFocusOnOpen(frame, bg);
-        frame.setVisible(true);     // 显示画面
-        bg.action();        // 调用定时触发和键盘监听
+        try {
+            JFrame frame = new JFrame("Tetris");        // 建立画面
+            final TetrisClassic bg = new TetrisClassic(20, 10);     // 设置背景宽高
+            frame.add(bg);
+            frame.setSize(ImageLoader.background.getWidth(), ImageLoader.background.getHeight());       // 布画大小
+            frame.setAlwaysOnTop(true);     // 总在最上面
+            frame.setUndecorated(true);     // 去掉边框
+            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);       // 关闭画面时停止程序
+            frame.setLocationRelativeTo(null);
+            WindowUtil.enableDrag(frame);
+            WindowUtil.requestFocusOnOpen(frame, bg);
+            frame.setVisible(true);     // 显示画面
+            bg.action();        // 调用定时触发和键盘监听
+        } catch (Throwable t) {
+            System.err.printf("TetrisClassic.main FAILED: %s, %s%n", t.getClass().getName(), t.getMessage());
+            for (StackTraceElement ste : t.getStackTrace()) {
+                System.err.printf("  at %s%n", ste.toString());
+            }
+            if (t.getCause() != null) {
+                Throwable cause = t.getCause();
+                System.err.printf("Caused by: %s, %s%n", cause.getClass().getName(), cause.getMessage());
+                for (StackTraceElement ste : cause.getStackTrace()) {
+                    System.err.printf("  at %s%n", ste.toString());
+                }
+            }
+        }
     }
 
     /**

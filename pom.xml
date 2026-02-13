@@ -21,8 +21,18 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.32</version>
+            <version>1.18.42</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>5.18.1</version>
+        </dependency>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-platform</artifactId>
+            <version>5.18.1</version>
         </dependency>
     </dependencies>
 
@@ -82,6 +92,10 @@
                     <imageName>${project.artifactId}</imageName>
                     <buildArgs>
                         <buildArg>--no-fallback</buildArg>
+                        <!-- 图形界面 -->
+                        <buildArg>-H:NativeLinkerOption=/SUBSYSTEM:WINDOWS</buildArg>
+                        <buildArg>-H:NativeLinkerOption=/ENTRY:mainCRTStartup</buildArg>
+
                         <buildArg>-H:+UnlockExperimentalVMOptions</buildArg>
                         <buildArg>-H:-CheckToolchain</buildArg>
                         <buildArg>-H:+ReportExceptionStackTraces</buildArg>

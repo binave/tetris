@@ -1,5 +1,10 @@
 [
 {
+  "name":"com.sun.jna.platform.win32.WinDef$HWND",
+  "allDeclaredConstructors":true,
+  "allDeclaredMethods":true
+},
+{
   "name":"java.awt.SequencedEvent"
 },
 {
@@ -30,6 +35,19 @@
 {
   "name":"javax.swing.plaf.metal.MetalRootPaneUI",
   "methods":[{"name":"createUI","parameterTypes":["javax.swing.JComponent"] }]
+},
+{
+  "name":"org.binave.game.tetris.Start",
+  "methods":[{"name":"main","parameterTypes":["java.lang.String[]"] }]
+},
+{
+  "name":"org.binave.game.tetris.Start$Kernel32",
+  "allDeclaredMethods":true
+},
+{
+  "name":"org.binave.game.tetris.Start$ConsoleOutputStream",
+  "allDeclaredConstructors":true,
+  "allDeclaredMethods":true
 },
 {
   "name":"org.binave.game.tetris.play.TetrisClassic",
