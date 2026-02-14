@@ -16,6 +16,8 @@
 
 package org.binave.game.tetris.entity;
 
+import lombok.Getter;
+
 import java.util.Random;
 
 /**
@@ -25,18 +27,12 @@ import java.util.Random;
 public class Tetromino {
 
     /* 建立格子数组 */
+    @Getter
     private Cell[] cells;
 
     /* 方块颜色图片 */
+    @Getter
     private byte imgColor;
-
-    public Cell[] getCells() {
-        return cells;
-    }
-
-    public byte getImgColor() {
-        return imgColor;
-    }
 
     /* 准备随机数 */
     private final Random ran = new Random();

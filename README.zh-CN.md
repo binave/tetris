@@ -37,13 +37,13 @@ usage: java -jar [jar_path] [option]
 
     双人玩法不再是获得分数，而是通过给对手增加麻烦来搞死对方为获胜条件。
 
-    --online-server,  -a [[port]]
+    --online-server,  -s [[port]]
         局域网双人玩法，主机。
         需要先启动，可以设置监听端口，等待副机启动连接后，使用 “P” 开始，游戏中用 “P” 暂停。
         操作方法与 “经典玩法” 相同。
         获胜条件与双人玩法一致。
 
-    --online-client,  -b [ipv4] [[port]]
+    --online-client,  -c [ipv4] [[port]]
         局域网双人玩法，副机。
         需要输入主机的 ip 启动。
         操作方法与 “经典玩法” 相同，副机无法控制暂停。

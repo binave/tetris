@@ -26,11 +26,6 @@
         </dependency>
         <dependency>
             <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna</artifactId>
-            <version>5.18.1</version>
-        </dependency>
-        <dependency>
-            <groupId>net.java.dev.jna</groupId>
             <artifactId>jna-platform</artifactId>
             <version>5.18.1</version>
         </dependency>
@@ -104,7 +99,7 @@
                         <buildArg>-H:+RemoveUnusedSymbols</buildArg>
                         <buildArg>-R:MaxHeapSize=128m</buildArg>
                         <buildArg>-R:MaxDirectMemorySize=32m</buildArg>
-                        <buildArg>--gc=epsilon</buildArg>
+                        <buildArg>--gc=serial</buildArg>
                     </buildArgs>
                 </configuration>
             </plugin>

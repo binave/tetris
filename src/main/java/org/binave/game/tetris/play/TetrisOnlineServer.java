@@ -113,6 +113,12 @@ public class TetrisOnlineServer extends JPanel {
      */
     private int rotate;
 
+    /**
+     * 预分配临时数组，避免 paint() 中重复创建对象（Epsilon GC 兼容）
+     */
+    private final Tetromino[] paintTetrominos = new Tetromino[4];
+    private final Cell[] paintCells = new Cell[4];
+
     private TetrisOnlineServer(int port, int row, int col) {
         int p = 2;      // 对战人数
         ClientPort = -1;        // 端口初始值
@@ -572,11 +578,11 @@ public class TetrisOnlineServer extends JPanel {
         g.drawString(" Line: " + line[1], 420, 245); // 显示行数
         g.translate(15, -12); // 调整相对位置
 
-        Tetromino[] t = {tetromino[0][1 - tetId[0]],// 1P 预览方块
-                tetromino[0][tetId[0]], // 1P 移动方块
-                tetromino[1][1 - tetId[1]],// 2P 预览方块
-                tetromino[1][tetId[1]] // 2P 移动方块
-        };
+        // 使用预分配实例变量，避免每帧创建数组
+        paintTetrominos[0] = tetromino[0][1 - tetId[0]];// 1P 预览方块
+        paintTetrominos[1] = tetromino[0][tetId[0]]; // 1P 移动方块
+        paintTetrominos[2] = tetromino[1][1 - tetId[1]];// 2P 预览方块
+        paintTetrominos[3] = tetromino[1][tetId[1]]; // 2P 移动方块
         sua.link(udpCell);      // 链接方块发送数组并初始化链接计数器
         sua.offer(false);       // 不是背景信息（是方块信息）
         sua.offer(!gameStart);      // 是否加载暂停画面
@@ -584,32 +590,35 @@ public class TetrisOnlineServer extends JPanel {
         sua.offer(sP[1], 5);        // 2P 的SP点
         sua.offer(win[0 + 2], 5);       // 1P 胜点
         sua.offer(win[1 + 2], 5);       // 2P 胜点
-        sua.offer(t[0].getImgColor(), 3);        // 1P 预览方块颜色
-        sua.offer(t[1].getImgColor(), 3);        // 1P 移动方块颜色
-        sua.offer(t[2].getImgColor(), 3);        // 2P 预览方块颜色
-        sua.offer(t[3].getImgColor(), 3);        // 2P 移动方块颜色
+        sua.offer(paintTetrominos[0].getImgColor(), 3);        // 1P 预览方块颜色
+        sua.offer(paintTetrominos[1].getImgColor(), 3);        // 1P 移动方块颜色
+        sua.offer(paintTetrominos[2].getImgColor(), 3);        // 2P 预览方块颜色
+        sua.offer(paintTetrominos[3].getImgColor(), 3);        // 2P 移动方块颜色
         for (int j = 0; j < 4; j++) {
-            Cell[] c = {t[0].getCells()[j], t[1].getCells()[j], t[2].getCells()[j],
-                    t[3].getCells()[j]};
+            // 使用预分配实例变量，避免每帧循环创建数组
+            paintCells[0] = paintTetrominos[0].getCells()[j];
+            paintCells[1] = paintTetrominos[1].getCells()[j];
+            paintCells[2] = paintTetrominos[2].getCells()[j];
+            paintCells[3] = paintTetrominos[3].getCells()[j];
             // 在背景上绘制方块，根据对象的 imgColor 属性绘制 color 数组中对应下标的图片。
-            g.drawImage(ImageLoader.color[t[0].getImgColor() - 1], c[0].getColumn() * booboo + 340, c[0].getRow()
+            g.drawImage(ImageLoader.color[paintTetrominos[0].getImgColor() - 1], paintCells[0].getColumn() * booboo + 340, paintCells[0].getRow()
                     * booboo + booboo + 23, null);
-            sua.offer(c[0].getColumn(), 2);     // 加入预览方块列坐标
-            sua.offer(c[0].getRow(), 1);
-            if (c[1].getRow() > -1)// 仅显示零行及以下的方块
-                g.drawImage(ImageLoader.color[t[1].getImgColor() - 1], c[1].getColumn() * booboo, c[1].getRow()
+            sua.offer(paintCells[0].getColumn(), 2);     // 加入预览方块列坐标
+            sua.offer(paintCells[0].getRow(), 1);
+            if (paintCells[1].getRow() > -1)// 仅显示零行及以下的方块
+                g.drawImage(ImageLoader.color[paintTetrominos[1].getImgColor() - 1], paintCells[1].getColumn() * booboo, paintCells[1].getRow()
                         * booboo + booboo, null);
-            sua.offer(c[1].getColumn() + 1, 4);     // 防止出现负数
-            sua.offer(c[1].getRow() + 1, 5);
-            g.drawImage(ImageLoader.color[t[2].getImgColor() - 1], c[2].getColumn() * booboo + 340, c[2].getRow()
+            sua.offer(paintCells[1].getColumn() + 1, 4);     // 防止出现负数
+            sua.offer(paintCells[1].getRow() + 1, 5);
+            g.drawImage(ImageLoader.color[paintTetrominos[2].getImgColor() - 1], paintCells[2].getColumn() * booboo + 340, paintCells[2].getRow()
                     * booboo + booboo + 275, null);
-            sua.offer(c[2].getColumn(), 2);
-            sua.offer(c[2].getRow(), 1);
-            if (c[3].getRow() > -1)
-                g.drawImage(ImageLoader.color[t[3].getImgColor() - 1], c[3].getColumn() * booboo + 512,
-                        c[3].getRow() * booboo + booboo, null);
-            sua.offer(c[3].getColumn() + 1, 4);
-            sua.offer(c[3].getRow() + 1, 5);
+            sua.offer(paintCells[2].getColumn(), 2);
+            sua.offer(paintCells[2].getRow(), 1);
+            if (paintCells[3].getRow() > -1)
+                g.drawImage(ImageLoader.color[paintTetrominos[3].getImgColor() - 1], paintCells[3].getColumn() * booboo + 512,
+                        paintCells[3].getRow() * booboo + booboo, null);
+            sua.offer(paintCells[3].getColumn() + 1, 4);
+            sua.offer(paintCells[3].getRow() + 1, 5);
         }
         try {
             sdp.setData(udpCell);       // 设定预发送数组

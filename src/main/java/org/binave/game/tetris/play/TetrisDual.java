@@ -100,6 +100,12 @@ public class TetrisDual extends JPanel {
      */
     private int rotate;
 
+    /**
+     * 预分配字体和颜色，避免 paint() 中重复创建对象（Epsilon GC 兼容）
+     */
+    private final Font[] font = {new Font("Monospaced", Font.BOLD, 15), new Font("Monospaced", Font.BOLD, 20)};
+    private final Color[] fontColor = {new Color(0x333777), new Color(0x777333), new Color(0x777777)};
+
     private TetrisDual(int row, int col) {
         int p = 2;
         tetromino = new Tetromino[p][2];        // 建立两个方块对象，分别用于控制下落或预览，并可交换彼此
@@ -476,14 +482,14 @@ public class TetrisDual extends JPanel {
             gameState = false;      // 防止多次覆盖背景
             return;     // 跳出此方法
         }
-        g.setFont(new Font("Monospaced", Font.BOLD, 20));       // 设置文字大小字体等
-        g.setColor(new Color(0x777333));        // 设置文字颜色
+        g.setFont(font[1]);       // 使用预分配实例变量
+        g.setColor(fontColor[1]);        // 使用预分配实例变量
         g.drawString(win[0] + ":" + win[1], 380, 200); // 显示得分
-        g.setFont(new Font("Monospaced", Font.BOLD, 15));       // 设置文字大小字体等
-        g.setColor(new Color(0x777777));        // 设置文字颜色
+        g.setFont(font[0]);       // 使用预分配实例变量
+        g.setColor(fontColor[2]);        // 使用预分配实例变量
         g.drawString("1P SP: " + sP[0], 290, 155); // 显示得分
         g.drawString(" Line: " + line[0], 290, 175); // 显示行数
-        g.setColor(new Color(0x333777));        // 设置文字颜色
+        g.setColor(fontColor[0]);        // 使用预分配实例变量
         g.drawString("2P SP: " + sP[1], 420, 225); // 显示得分
         g.drawString(" Line: " + line[1], 420, 245); // 显示行数
         g.translate(15, -12); // 调整相对位置

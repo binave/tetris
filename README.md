@@ -39,13 +39,13 @@ Options:
         Space pauses the game, ESC quits.
         In two-player mode, the goal is no longer to score points, but to mess up your opponent and cause them to lose.
 
-    --online-server,  -a  [[port]]
+    --online-server,  -s  [[port]]
         LAN two-player mode (host).
         Must be started first. Optional listening port can be specified. After the client connects, press P to start; press P again during gameplay to pause.
         Controls are the same as in classic mode.
         Winning condition is the same as in two-player mode.
 
-    --online-client,  -b  [ipv4] [[port]]
+    --online-client,  -c  [ipv4] [[port]]
         LAN two-player mode (client).
         Requires the host's IP to start.
         Controls are the same as in classic mode. The client cannot control pause.

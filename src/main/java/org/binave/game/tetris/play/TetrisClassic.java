@@ -89,6 +89,12 @@ public class TetrisClassic extends JPanel {
     private int line;
     private int level;
 
+    /**
+     * 预分配字体和颜色，避免 paint() 中重复创建对象（Epsilon GC 兼容）
+     */
+    private final Font font = new Font("Monospaced", Font.BOLD, 20);
+    private final Color fontColor = new Color(0x777777);
+
     private TetrisClassic(int row, int col) {
         backGround = new byte[row][col];        // 静止方块图片存储数组，会将符合条件的移动方块绘制到此数组上
         height = row;
@@ -391,8 +397,8 @@ public class TetrisClassic extends JPanel {
             gameState = false;      // 防止多次覆盖背景
             return;     // 跳出此方法
         }
-        g.setFont(new Font("Monospaced", Font.BOLD, 20));       // 设置文字大小字体等
-        g.setColor(new Color(0x777777));                 // 设置文字颜色
+        g.setFont(font);       // 使用预分配实例变量
+        g.setColor(fontColor);                 // 使用预分配实例变量
         g.drawString("SP: " + sP, 310, 175);        // 显示得分
         g.drawString("Line: " + line, 310, 230);    // 显示行数
         g.drawString("Level: " + (level + 1), 310, 285); // 显示行数
