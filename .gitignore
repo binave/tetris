@@ -8,7 +8,6 @@
 !*.gradle
 !*.java
 !*.json
-!*.png
 !*.xml
 
 # Avoid ignoring default file

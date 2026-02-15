@@ -4,8 +4,6 @@
 
 启动方式使用 --help。
 
-图片改自达内教材资源。
-
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 Licensing

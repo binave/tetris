@@ -22,5 +22,4 @@ public class Cell {
         this.column += value;
     }
 
-
 }

@@ -17,14 +17,13 @@
 package org.binave.game.tetris.play;
 
 import org.binave.game.tetris.Start;
-import org.binave.game.tetris.common.ImageLoader;
+import org.binave.game.tetris.common.ImageGenerator;
+import org.binave.game.tetris.common.TetrisView;
 import org.binave.game.tetris.common.WindowUtil;
 import org.binave.game.tetris.common.UDPArrayAlter;
 import org.binave.game.tetris.entity.Cell;
 import org.binave.game.tetris.entity.Tetromino;
 
-import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -177,7 +176,7 @@ public class TetrisOnlineServer extends JPanel {
         JFrame frame = new JFrame("Tetris");        // 建立画面
         final TetrisOnlineServer bg = new TetrisOnlineServer(port, 20, 10);   // 设置背景宽高
         frame.add(bg);
-        frame.setSize(ImageLoader.backgroundDual.getWidth(), ImageLoader.backgroundDual.getHeight());       // 布画大小
+        frame.setSize(ImageGenerator.backgroundDual.getWidth(), ImageGenerator.backgroundDual.getHeight());       // 布画大小
 //         frame.setAlwaysOnTop(true);        // 总在最上面
         frame.setUndecorated(true);         // 去掉边框
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);       // 关闭画面时停止程序
@@ -554,29 +553,25 @@ public class TetrisOnlineServer extends JPanel {
             rotateRight(i);     // 递归触发本方法
     }
 
-    private final Font[] font = {new Font("Monospaced", Font.BOLD, 15),
-            new Font("Monospaced", Font.BOLD, 20),
-            new Font("Monospaced", Font.BOLD, 35)};     // 设置文字大小字体等
-
-    private final Color[] fontColor = {new Color(0x333777), new Color(0x777333),
-            new Color(0x777777)};       // 设置文字颜色
-
     /**
      * 绘制画面
      */
     public void paint(Graphics g) {
-        g.drawImage(ImageLoader.backgroundDual, 0, 0, null); // 覆盖背景图片
-        g.setFont(font[1]);
-        g.setColor(fontColor[1]);
-        g.drawString(win[0 + 2] + ":" + win[1 + 2], 380, 200); // 显示得分
-        g.setFont(font[0]);
-        g.setColor(fontColor[2]);
-        g.drawString("1P SP: " + sP[0], 290, 155); // 显示得分
-        g.drawString(" Line: " + line[0], 290, 175); // 显示行数
-        g.setColor(fontColor[0]);
-        g.drawString("2P SP: " + sP[1], 420, 225); // 显示得分
-        g.drawString(" Line: " + line[1], 420, 245); // 显示行数
-        g.translate(15, -12); // 调整相对位置
+        TetrisView.drawBackground(g, ImageGenerator.backgroundDual);
+
+        // 绘制信息面板 (胜点在 win[2], win[3])
+        TetrisView.drawText(g, win[2] + ":" + win[3], TetrisView.DUAL_SCORE_X, 200,
+                TetrisView.FONT_MEDIUM, TetrisView.COLOR_YELLOW);
+        TetrisView.drawText(g, "1P SP: " + sP[0], TetrisView.DUAL_1P_INFO_X, 155,
+                TetrisView.FONT_SMALL, TetrisView.COLOR_GRAY);
+        TetrisView.drawText(g, " Line: " + line[0], TetrisView.DUAL_1P_INFO_X, 175,
+                TetrisView.FONT_SMALL, TetrisView.COLOR_GRAY);
+        TetrisView.drawText(g, "2P SP: " + sP[1], TetrisView.DUAL_2P_INFO_X, 225,
+                TetrisView.FONT_SMALL, TetrisView.COLOR_BLUE);
+        TetrisView.drawText(g, " Line: " + line[1], TetrisView.DUAL_2P_INFO_X, 245,
+                TetrisView.FONT_SMALL, TetrisView.COLOR_BLUE);
+
+        TetrisView.applyTranslate(g);
 
         // 使用预分配实例变量，避免每帧创建数组
         paintTetrominos[0] = tetromino[0][1 - tetId[0]];// 1P 预览方块
@@ -588,8 +583,8 @@ public class TetrisOnlineServer extends JPanel {
         sua.offer(!gameStart);      // 是否加载暂停画面
         sua.offer(sP[0], 5);        // 1P 的SP点
         sua.offer(sP[1], 5);        // 2P 的SP点
-        sua.offer(win[0 + 2], 5);       // 1P 胜点
-        sua.offer(win[1 + 2], 5);       // 2P 胜点
+        sua.offer(win[2], 5);       // 1P 胜点
+        sua.offer(win[3], 5);       // 2P 胜点
         sua.offer(paintTetrominos[0].getImgColor(), 3);        // 1P 预览方块颜色
         sua.offer(paintTetrominos[1].getImgColor(), 3);        // 1P 移动方块颜色
         sua.offer(paintTetrominos[2].getImgColor(), 3);        // 2P 预览方块颜色
@@ -600,23 +595,27 @@ public class TetrisOnlineServer extends JPanel {
             paintCells[1] = paintTetrominos[1].getCells()[j];
             paintCells[2] = paintTetrominos[2].getCells()[j];
             paintCells[3] = paintTetrominos[3].getCells()[j];
-            // 在背景上绘制方块，根据对象的 imgColor 属性绘制 color 数组中对应下标的图片。
-            g.drawImage(ImageLoader.color[paintTetrominos[0].getImgColor() - 1], paintCells[0].getColumn() * booboo + 340, paintCells[0].getRow()
-                    * booboo + booboo + 23, null);
+            // 在背景上绘制方块
+            TetrisView.drawBlock(g, paintTetrominos[0].getImgColor(),
+                    paintCells[0].getColumn() * TetrisView.BOO_BOO + TetrisView.DUAL_PREVIEW_X,
+                    paintCells[0].getRow() * TetrisView.BOO_BOO + TetrisView.BOO_BOO + 23);
             sua.offer(paintCells[0].getColumn(), 2);     // 加入预览方块列坐标
             sua.offer(paintCells[0].getRow(), 1);
             if (paintCells[1].getRow() > -1)// 仅显示零行及以下的方块
-                g.drawImage(ImageLoader.color[paintTetrominos[1].getImgColor() - 1], paintCells[1].getColumn() * booboo, paintCells[1].getRow()
-                        * booboo + booboo, null);
+                TetrisView.drawBlock(g, paintTetrominos[1].getImgColor(),
+                        paintCells[1].getColumn() * TetrisView.BOO_BOO + TetrisView.DUAL_1P_FIELD_X,
+                        paintCells[1].getRow() * TetrisView.BOO_BOO + TetrisView.BOO_BOO);
             sua.offer(paintCells[1].getColumn() + 1, 4);     // 防止出现负数
             sua.offer(paintCells[1].getRow() + 1, 5);
-            g.drawImage(ImageLoader.color[paintTetrominos[2].getImgColor() - 1], paintCells[2].getColumn() * booboo + 340, paintCells[2].getRow()
-                    * booboo + booboo + 275, null);
+            TetrisView.drawBlock(g, paintTetrominos[2].getImgColor(),
+                    paintCells[2].getColumn() * TetrisView.BOO_BOO + TetrisView.DUAL_PREVIEW_X,
+                    paintCells[2].getRow() * TetrisView.BOO_BOO + TetrisView.BOO_BOO + 275);
             sua.offer(paintCells[2].getColumn(), 2);
             sua.offer(paintCells[2].getRow(), 1);
             if (paintCells[3].getRow() > -1)
-                g.drawImage(ImageLoader.color[paintTetrominos[3].getImgColor() - 1], paintCells[3].getColumn() * booboo + 512,
-                        paintCells[3].getRow() * booboo + booboo, null);
+                TetrisView.drawBlock(g, paintTetrominos[3].getImgColor(),
+                        paintCells[3].getColumn() * TetrisView.BOO_BOO + TetrisView.DUAL_2P_FIELD_X,
+                        paintCells[3].getRow() * TetrisView.BOO_BOO + TetrisView.BOO_BOO);
             sua.offer(paintCells[3].getColumn() + 1, 4);
             sua.offer(paintCells[3].getRow() + 1, 5);
         }
@@ -628,30 +627,14 @@ public class TetrisOnlineServer extends JPanel {
         } catch (IOException ignored) {
         }
 
-        // 绘制背景，根据背景数组中的值调用 color 数组中相应下标的图片绘制于背景之上
-        for (int row = height - 1; row >= 0; row--) {
-            int inCell0 = 0, inCell1 = 0;
-            for (int col = 0; col < width; col++) {
-                if (backGround[0][row][col] != 0) {
-                    inCell0++;
-                    g.drawImage(ImageLoader.color[backGround[0][row][col] - 1], col
-                            * booboo, row * booboo + booboo, null);
-                }
-                if (backGround[1][row][col] != 0) {
-                    inCell1++;
-                    g.drawImage(ImageLoader.color[backGround[1][row][col] - 1], col
-                            * booboo + 512, row * booboo + booboo, null);
-                }
-            }
-            if (row < height - 1 && inCell0 == 0 && inCell1 == 0)
-                break;
-        }
+        // 绘制背景格子
+        TetrisView.drawBackGroundPlayer(g, backGround, 0, width, height, TetrisView.DUAL_1P_FIELD_X);
+        TetrisView.drawBackGroundPlayer(g, backGround, 1, width, height, TetrisView.DUAL_2P_FIELD_X);
+
         if (!gameStart) {
-            g.drawImage(ImageLoader.pause, 0, 0, null); // 覆盖背景图片
-            g.setFont(font[2]);
-            g.setColor(fontColor[2]);
-            g.drawString(times[2] > 15 ? "    Offline..."
-                    : "Press \"P\" to Start", 210, 220);
+            TetrisView.drawBackground(g, ImageGenerator.pause);
+            TetrisView.drawText(g, times[2] > 15 ? "    Offline..." : "Press \"P\" to Start",
+                    210, 220, TetrisView.FONT_LARGE, TetrisView.COLOR_GRAY);
         }
     }
 }

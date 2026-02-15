@@ -4,8 +4,6 @@ A Tetris game with LAN multiplayer support.
 
 Run with `--help` for usage information.
 
-Images adapted from Tarena educational resources.
-
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 - [简体中文](README.zh-CN.md)

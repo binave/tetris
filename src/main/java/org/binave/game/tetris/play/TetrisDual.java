@@ -16,13 +16,12 @@
 
 package org.binave.game.tetris.play;
 
-import org.binave.game.tetris.common.ImageLoader;
+import org.binave.game.tetris.common.ImageGenerator;
+import org.binave.game.tetris.common.TetrisView;
 import org.binave.game.tetris.common.WindowUtil;
 import org.binave.game.tetris.entity.Cell;
 import org.binave.game.tetris.entity.Tetromino;
 
-import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -100,12 +99,6 @@ public class TetrisDual extends JPanel {
      */
     private int rotate;
 
-    /**
-     * 预分配字体和颜色，避免 paint() 中重复创建对象（Epsilon GC 兼容）
-     */
-    private final Font[] font = {new Font("Monospaced", Font.BOLD, 15), new Font("Monospaced", Font.BOLD, 20)};
-    private final Color[] fontColor = {new Color(0x333777), new Color(0x777333), new Color(0x777777)};
-
     private TetrisDual(int row, int col) {
         int p = 2;
         tetromino = new Tetromino[p][2];        // 建立两个方块对象，分别用于控制下落或预览，并可交换彼此
@@ -134,7 +127,7 @@ public class TetrisDual extends JPanel {
         win = new int[p];
         times = new int[p];
         hard = new int[p];
-        state = ImageLoader.backgroundDual;     // 默认背景
+        state = ImageGenerator.backgroundDual;     // 默认背景
         exchangeTetromino(0);       // 切换默认方块组
         exchangeTetromino(1);
     }
@@ -146,7 +139,7 @@ public class TetrisDual extends JPanel {
         JFrame frame = new JFrame("Tetris");        // 建立画面
         final TetrisDual bg = new TetrisDual(20, 10);       // 设置背景宽高
         frame.add(bg);
-        frame.setSize(ImageLoader.backgroundDual.getWidth(), ImageLoader.backgroundDual.getHeight());       // 布画大小
+        frame.setSize(ImageGenerator.backgroundDual.getWidth(), ImageGenerator.backgroundDual.getHeight());       // 布画大小
         frame.setAlwaysOnTop(true);     // 总在最上面
         frame.setUndecorated(true);     // 去掉边框
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);       // 关闭画面时停止程序
@@ -229,15 +222,15 @@ public class TetrisDual extends JPanel {
                         exTet(1);                 // 使用下一个方块
                         break;
                     case KeyEvent.VK_SPACE:  // 空格键弹起
-                        if (state != ImageLoader.backgroundDual) {
-                            if (state == ImageLoader.game_over) {// 重新开始游戏
+                        if (state != ImageGenerator.backgroundDual) {
+                            if (state == ImageGenerator.game_over) {// 重新开始游戏
                                 initialise();       // 初始化静态方块，sP、消除行数
                             }
-                            state = ImageLoader.backgroundDual;
+                            state = ImageGenerator.backgroundDual;
                             gameStart = true;       // 从暂停状态变为游戏进行状态
                             gameState = true;       // 允许屏幕刷新
                         } else {// 暂停
-                            state = ImageLoader.pause;      // 设置背4景图片为暂停
+                            state = ImageGenerator.pause;      // 设置背4景图片为暂停
                             gameStart = false;      // 禁止游戏运行
                         }
                         break;
@@ -382,7 +375,7 @@ public class TetrisDual extends JPanel {
             // 如果有格子的行数已经达到顶层，先达到 60 行者为胜。
             if (row == 0 || line[1 - i] >= 60) {
                 win[1 - i] += 1;
-                state = ImageLoader.game_over;      // 更换游戏结束的背景
+                state = ImageGenerator.game_over;      // 更换游戏结束的背景
                 gameStart = false;      // 判定游戏结束
                 break;      // 跳出此循环
             }
@@ -477,56 +470,25 @@ public class TetrisDual extends JPanel {
      */
     public void paint(Graphics g) {
         if (gameState)// 用于防止多次调用
-            g.drawImage(state, 0, 0, null); // 覆盖背景图片
+            TetrisView.drawBackground(g, state);
         if (!gameStart) {// 如果游戏状态为停止
             gameState = false;      // 防止多次覆盖背景
             return;     // 跳出此方法
         }
-        g.setFont(font[1]);       // 使用预分配实例变量
-        g.setColor(fontColor[1]);        // 使用预分配实例变量
-        g.drawString(win[0] + ":" + win[1], 380, 200); // 显示得分
-        g.setFont(font[0]);       // 使用预分配实例变量
-        g.setColor(fontColor[2]);        // 使用预分配实例变量
-        g.drawString("1P SP: " + sP[0], 290, 155); // 显示得分
-        g.drawString(" Line: " + line[0], 290, 175); // 显示行数
-        g.setColor(fontColor[0]);        // 使用预分配实例变量
-        g.drawString("2P SP: " + sP[1], 420, 225); // 显示得分
-        g.drawString(" Line: " + line[1], 420, 245); // 显示行数
-        g.translate(15, -12); // 调整相对位置
-        for (int j = 0; j < tetromino[0][0].getCells().length; j++) {
-            Cell ready0 = tetromino[0][1 - tetId[0]].getCells()[j];
-            Cell ready1 = tetromino[1][1 - tetId[1]].getCells()[j];
-            Cell run0 = tetromino[0][tetId[0]].getCells()[j];
-            Cell run1 = tetromino[1][tetId[1]].getCells()[j];
-            // 在背景上绘制方块，根据对象的 imgColor 属性绘制 color 数组中对应下标的图片。
-            g.drawImage(ImageLoader.color[ready0.getImg() - 1], ready0.getColumn() * booboo + 340,
-                    ready0.getRow() * booboo + booboo + 23, null);
-            g.drawImage(ImageLoader.color[ready1.getImg() - 1], ready1.getColumn() * booboo + 340,
-                    ready1.getRow() * booboo + booboo + 275, null);
-            if (run0.getRow() > -1)
-                g.drawImage(ImageLoader.color[run0.getImg() - 1], run0.getColumn() * booboo, run0.getRow()
-                        * booboo + booboo, null);
-            if (run1.getRow() > -1)
-                g.drawImage(ImageLoader.color[run1.getImg() - 1], run1.getColumn() * booboo + 512,
-                        run1.getRow() * booboo + booboo, null);
-        }
-        // 绘制背景，根据背景数组中的值调用 color 数组中相应下标的图片绘制于背景之上
-        for (int row = height - 1; row >= 0; row--) {
-            int inCell0 = 0, inCell1 = 0;
-            for (int col = 0; col < width; col++) {
-                if (backGround[0][row][col] != 0) {
-                    inCell0++;
-                    g.drawImage(ImageLoader.color[backGround[0][row][col] - 1], col
-                            * booboo, row * booboo + booboo, null);
-                }
-                if (backGround[1][row][col] != 0) {
-                    inCell1++;
-                    g.drawImage(ImageLoader.color[backGround[1][row][col] - 1], col
-                            * booboo + 512, row * booboo + booboo, null);
-                }
-            }
-            if (row < height - 1 && inCell0 == 0 && inCell1 == 0)
-                break;
-        }
+        // 绘制信息面板
+        TetrisView.drawDualInfo(g, sP, line, win);
+        TetrisView.applyTranslate(g);
+
+        // 绘制预览方块
+        TetrisView.drawPreviewTetromino(g, tetromino[0][1 - tetId[0]], TetrisView.DUAL_PREVIEW_X, 23);
+        TetrisView.drawPreviewTetromino(g, tetromino[1][1 - tetId[1]], TetrisView.DUAL_PREVIEW_X, 275);
+
+        // 绘制移动方块
+        TetrisView.drawTetromino(g, tetromino[0][tetId[0]], TetrisView.DUAL_1P_FIELD_X, 0, true);
+        TetrisView.drawTetromino(g, tetromino[1][tetId[1]], TetrisView.DUAL_2P_FIELD_X, 0, true);
+
+        // 绘制背景格子
+        TetrisView.drawBackGroundPlayer(g, backGround, 0, width, height, TetrisView.DUAL_1P_FIELD_X);
+        TetrisView.drawBackGroundPlayer(g, backGround, 1, width, height, TetrisView.DUAL_2P_FIELD_X);
     }
 }

@@ -16,14 +16,12 @@
 
 package org.binave.game.tetris.play;
 
-import org.binave.game.tetris.common.ImageLoader;
+import org.binave.game.tetris.common.ImageGenerator;
+import org.binave.game.tetris.common.TetrisView;
 import org.binave.game.tetris.common.WindowUtil;
 import org.binave.game.tetris.entity.Cell;
 import org.binave.game.tetris.entity.Tetromino;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
@@ -89,12 +87,6 @@ public class TetrisClassic extends JPanel {
     private int line;
     private int level;
 
-    /**
-     * 预分配字体和颜色，避免 paint() 中重复创建对象（Epsilon GC 兼容）
-     */
-    private final Font font = new Font("Monospaced", Font.BOLD, 20);
-    private final Color fontColor = new Color(0x777777);
-
     private TetrisClassic(int row, int col) {
         backGround = new byte[row][col];        // 静止方块图片存储数组，会将符合条件的移动方块绘制到此数组上
         height = row;
@@ -103,7 +95,7 @@ public class TetrisClassic extends JPanel {
         tetromino[0] = new Tetromino();     // 预交换方块1
         tetromino[1] = new Tetromino();     // 预交换方块2
         tetromino[1 - i].init();       // 初始化方块属性
-        state = ImageLoader.background;     // 默认背景
+        state = ImageGenerator.background;     // 默认背景
         allowDrop = true;
         gameStart = true;       // 允许游戏进行
         gameState = true;       // 允许屏幕刷新
@@ -119,7 +111,7 @@ public class TetrisClassic extends JPanel {
             JFrame frame = new JFrame("Tetris");        // 建立画面
             final TetrisClassic bg = new TetrisClassic(20, 10);     // 设置背景宽高
             frame.add(bg);
-            frame.setSize(ImageLoader.background.getWidth(), ImageLoader.background.getHeight());       // 布画大小
+            frame.setSize(ImageGenerator.background.getWidth(), ImageGenerator.background.getHeight());       // 布画大小
             frame.setAlwaysOnTop(true);     // 总在最上面
             frame.setUndecorated(true);     // 去掉边框
             frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);       // 关闭画面时停止程序
@@ -185,12 +177,12 @@ public class TetrisClassic extends JPanel {
                     case KeyEvent.VK_P:
                         gameStart = !gameStart;      // 暂停或继续游戏运行
                         if (gameStart) {
-                            if (state == ImageLoader.game_over) {// 重新开始游戏
+                            if (state == ImageGenerator.game_over) {// 重新开始游戏
                                 initialise();       // 初始化静态方块，sP、消除行数
                             }
-                            state = ImageLoader.background;
+                            state = ImageGenerator.background;
                             gameState = true;
-                        } else state = ImageLoader.pause;
+                        } else state = ImageGenerator.pause;
                         break;
                     case KeyEvent.VK_SHIFT + 1000:// 左 SHIFT 键按下，消耗SP使用下一个方块
                         exTet();
@@ -312,7 +304,7 @@ public class TetrisClassic extends JPanel {
                 subLine++; // 奖励SP点，可以用于更换方块。
             }
             if (row == 0) {     // 如果有格子的行数已经达到顶层
-                state = ImageLoader.game_over;      // 更换游戏结束的背景
+                state = ImageGenerator.game_over;      // 更换游戏结束的背景
                 gameStart = false;      // 判定游戏结束
                 break;      // 跳出此循环
             }
@@ -390,42 +382,22 @@ public class TetrisClassic extends JPanel {
             rotateRight();      // 触发本方法
     }
 
-    public void paint(Graphics g) {     // 【绘制画面】
+    public void paint(java.awt.Graphics g) {     // 【绘制画面】
         if (gameState)  // 用于防止多次调用
-            g.drawImage(state, 0, 0, null); // 覆盖背景图片
+            TetrisView.drawBackground(g, state);
         if (!gameStart) {           // 如果游戏状态为停止
             gameState = false;      // 防止多次覆盖背景
             return;     // 跳出此方法
         }
-        g.setFont(font);       // 使用预分配实例变量
-        g.setColor(fontColor);                 // 使用预分配实例变量
-        g.drawString("SP: " + sP, 310, 175);        // 显示得分
-        g.drawString("Line: " + line, 310, 230);    // 显示行数
-        g.drawString("Level: " + (level + 1), 310, 285); // 显示行数
-        g.translate(15, -12); // 调整相对位置
+        // 绘制信息面板
+        TetrisView.drawSingleInfo(g, sP, line, level);
+        TetrisView.applyTranslate(g);
 
-        for (int j = 0; j < tetromino[1 - i].getCells().length; j++) {
-            Cell t0 = tetromino[1 - i].getCells()[j];
-            Cell t1 = tetromino[i].getCells()[j];
-            // 在背景上绘制预览方块，根据对象的 imgColor 属性绘制 color 数组中对应下标的图片。
-            g.drawImage(ImageLoader.color[t0.getImg() - 1], t0.getColumn() * booboo + 340, t0.getRow()
-                    * booboo + booboo + 23, null);
-            if (t1.getRow() > -1)
-                g.drawImage(ImageLoader.color[t1.getImg() - 1], t1.getColumn() * booboo, t1.getRow() * booboo
-                        + booboo, null);
-        }
-        for (int row = height - 1; row >= 0; row--) {
-            int inCell = 0;
-            for (int col = 0; col < width; col++) {     // 绘制背景
-                if (backGround[row][col] != 0) {
-                    inCell++;
-                    // 根据背景数组中的值调用 color 数组中相应下标的图片绘制于背景之上
-                    g.drawImage(ImageLoader.color[backGround[row][col] - 1], col * booboo,
-                            row * booboo + booboo, null);
-                }
-            }
-            if (inCell == 0)
-                break;      // 当遍历到空行则不再进行背景的扫描
-        }
+        // 绘制预览方块和移动方块
+        TetrisView.drawPreviewTetromino(g, tetromino[1 - i], TetrisView.SINGLE_PREVIEW_X, 23);
+        TetrisView.drawTetromino(g, tetromino[i], 0, 0, true);
+
+        // 绘制背景格子
+        TetrisView.drawBackGroundSingle(g, backGround, width, height, 0);
     }
 }
